@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ****** UPDATE Title ****** -->
+    <title>Confidentiality Check Results - GenAI Shield</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> <!-- Optional CSS -->
+    <style>
+        /* Basic styling (can reuse or modify previous styles) */
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f8f9fa; }
+        .container { max-width: 800px; margin: 20px auto; padding: 20px; background-color: #fff; border: 1px solid #dfe1e5; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #202124; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+        pre { background-color: #f1f3f4; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; margin-bottom: 20px;}
+        .results-summary { padding: 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; }
+        .issues-found { background-color: #fdd; border: 1px solid #fbb; color: #a00; } /* Red warning */
+        .no-issues-found { background-color: #e6f4ea; border: 1px solid #c6e1cf; color: #137333;} /* Green confirmation */
+        .findings-list { list-style: none; padding: 0; }
+        .findings-list li { border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px; margin-bottom: 10px; background-color: #fff; }
+        .findings-list li strong { display: inline-block; min-width: 120px; font-family: monospace; background-color: #eee; padding: 2px 5px; border-radius: 3px; margin-right: 10px; }
+        .finding-type { font-size: 0.9em; color: #5f6368; display: block; margin-bottom: 5px; }
+        .disclaimer { font-size: 0.85em; color: #70757a; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 10px;}
+        .back-link { display: block; margin-top: 20px; text-decoration: none; color: #1a73e8; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ****** UPDATE Heading ****** -->
+        <h1>GenAI Shield - Confidentiality Check Results</h1>
+
+        <h2>Original Text:</h2>
+        <pre>{{ original_text }}</pre>
+
+        <!-- ****** DISPLAY SUMMARY BASED ON results.found_issues ****** -->
+        <h2>Analysis Summary:</h2>
+        {% if results.found_issues %}
+            <div class="results-summary issues-found">
+                ⚠️ Potential sensitive information detected based on configured rules. Please review carefully.
+            </div>
+            <h2>Potential Issues Found:</h2>
+            <ul class="findings-list">
+                <!-- ****** LOOP THROUGH results.findings ****** -->
+                {% for finding in results.findings %}
+                <li>
+                    <span class="finding-type">Type: {{ finding.type }}</span>
+                    <strong>{{ finding.value }}</strong> - {{ finding.description }}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="results-summary no-issues-found">
+                ✅ No obvious sensitive information detected based on current rules.
+            </div>
+        {% endif %}
+
+        <div class="disclaimer">
+            <strong>Disclaimer:</strong> This check uses predefined keywords and patterns. It is not foolproof and may miss some sensitive information or flag non-sensitive items (false positives). Always exercise caution and review content manually before sharing.
+        </div>
+
+        <a href="{{ url_for('home') }}" class="back-link">← Check New Text</a>
+    </div>
+</body>
+</html>

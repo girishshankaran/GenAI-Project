@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Shield</title>
+    <style>
+        /* Basic Reset & Body Styling */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif; /* Google uses Product Sans, Arial is a common fallback */
+            color: #202124; /* Standard dark grey text */
+        }
+
+        body {
+            display: flex;
+            flex-direction: column; /* Stack header, main, footer vertically */
+        }
+
+        a {
+            text-decoration: none; /* Remove underlines from links */
+            color: #1a0dab; /* Google's standard link color */
+        }
+
+        a:hover {
+            text-decoration: underline; /* Underline on hover like Google */
+        }
+
+        /* Header Styling */
+        header {
+            padding: 15px 30px;
+            text-align: right; /* Align items to the right */
+            font-size: 13px;
+        }
+
+        header a {
+            margin-left: 15px;
+            color: #5f6368; /* Lighter grey for header links */
+        }
+
+        header .signin-button { /* Simple button-like style for Sign In */
+            background-color: #1a73e8; /* Google blue */
+            color: white;
+            padding: 7px 15px;
+            border-radius: 4px;
+            text-decoration: none; /* Ensure no underline */
+            font-weight: bold;
+        }
+         header .signin-button:hover {
+            background-color: #185abc; /* Darker blue on hover */
+            box-shadow: 0 1px 2px 0 rgba(66,133,244,0.3), 0 1px 3px 1px rgba(66,133,244,0.15);
+            text-decoration: none;
+        }
+
+
+        /* Main Content Area Styling */
+        main {
+            flex-grow: 1; /* Allow main content to fill available space */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center content vertically */
+            align-items: center; /* Center content horizontally */
+            padding: 20px;
+            padding-bottom: 10vh; /* Push content up slightly from absolute center */
+        }
+
+        /* Logo Styling */
+        .logo h1 {
+            font-size: 70px; /* Large font size, adjust as needed */
+            font-weight: normal; /* Google's logo isn't typically bold */
+            color: #4285F4; /* Example: Using Google Blue */
+            /* You could add other colors for different letters like Google does */
+            /* color: #EA4335;  Red */
+            /* color: #FBBC05;  Yellow */
+            /* color: #34A853;  Green */
+            margin: 0;
+            margin-bottom: 25px; /* Space below logo */
+            letter-spacing: -1px; /* Slight tightening of letters */
+        }
+        /* Uncomment below if using an image logo */
+        /* .logo img {
+            max-width: 272px;
+            height: auto;
+            margin-bottom: 25px;
+        } */
+
+
+        /* Input Area Styling */
+        .input-area {
+            max-width: 580px; /* Match Google's search bar width */
+            width: 90%;
+            margin-bottom: 30px;
+            display: flex; /* To align icon and input */
+            align-items: center;
+            border: 1px solid #dfe1e5; /* Light grey border */
+            border-radius: 24px; /* Rounded corners */
+            padding: 5px 15px;
+            box-shadow: none;
+            transition: box-shadow 0.3s ease; /* Smooth shadow transition */
+        }
+
+        .input-area:hover,
+        .input-area:focus-within { /* Style when hovered or input inside is focused */
+             border-color: rgba(223,225,229,0); /* Hide border color */
+             box-shadow: 0 1px 6px rgba(32,33,36,0.28); /* Google's focus shadow */
+        }
+
+        .input-area .search-icon {
+            color: #9aa0a6; /* Grey icon color */
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .input-area input[type="text"] {
+            flex-grow: 1; /* Input takes remaining space */
+            border: none;
+            outline: none; /* Remove default focus outline */
+            padding: 10px 0; /* Vertical padding */
+            font-size: 16px;
+            background-color: transparent;
+        }
+
+        /* Button Area Styling */
+        .buttons {
+            display: flex;
+            justify-content: center; /* Center buttons horizontally */
+        }
+
+        .buttons button {
+            background-color: #f8f9fa; /* Light grey background */
+            border: 1px solid #f8f9fa; /* Matching border */
+            border-radius: 4px;
+            color: #3c4043; /* Dark grey text */
+            font-size: 14px;
+            padding: 10px 16px;
+            margin: 0 6px; /* Space between buttons */
+            cursor: pointer;
+            transition: border-color 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .buttons button:hover {
+            border-color: #dadce0; /* Slightly darker border on hover */
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+
+        .buttons button:focus {
+             border-color: #4285f4; /* Blue border on focus (accessibility) */
+             outline: none;
+        }
+
+        /* Language Offer Styling */
+        .language-offer {
+            margin-top: 25px;
+            font-size: 13px;
+        }
+         .language-offer a {
+             margin-left: 5px;
+         }
+
+
+        /* Footer Styling */
+        footer {
+            background: #f2f2f2; /* Light grey background */
+            padding: 15px 30px;
+            font-size: 13px;
+            color: #70757a; /* Grey text */
+            border-top: 1px solid #e4e4e4; /* Subtle top border */
+            display: flex;
+            justify-content: space-between; /* Pushes link groups apart */
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+
+         @media (max-width: 600px) { /* Center footer links on small screens */
+             footer {
+                 justify-content: center;
+             }
+             .footer-links-left, .footer-links-right {
+                  text-align: center;
+                  width: 100%;
+                  margin-bottom: 10px;
+             }
+         }
+
+        footer a {
+            color: #70757a; /* Match footer text color */
+            padding: 0 10px; /* Spacing between links */
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#">About</a>
+        <a href="#">Features</a>
+        <a href="#" class="signin-button">Sign In</a>
+    </header>
+
+    <main>
+        <div class="logo">
+            <!-- You can replace this h1 with an <img src="your-logo.png"> if you have one -->
+            <h1>GenAI Shield</h1>
+        </div>
+
+        <div class="input-area">
+            <span class="search-icon">🛡️</span> <!-- Shield icon example, or use 🔍 -->
+            <input type="text" placeholder="Enter text, URL, or upload content to analyze...">
+            <!-- Optional: Add icons for mic, camera, upload here if needed -->
+        </div>
+
+        <div class="buttons">
+            <button type="submit">Analyze Content</button>
+            <button type="button">How it Works</button>
+        </div>
+
+        <div class="language-offer">
+           GenAI Shield offered in: <a href="#">English</a>
+        </div>
+    </main>
+
+    <footer>
+       <div class="footer-links-left">
+            <a href="#">Security Center</a>
+            <a href="#">Business</a>
+            <a href="#">How Analysis Works</a>
+       </div>
+       <div class="footer-links-right">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Settings</a>
+       </div>
+    </footer>
+
+</body>
+</html>
+
