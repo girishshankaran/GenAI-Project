@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Shield</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 0; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+            color: #202124; 
+        }
+        header { 
+            padding: 15px 30px; 
+            text-align: right; 
+            font-size: 13px; 
+        }
+        header a { 
+            margin-left: 15px; 
+            color: #5f6368; 
+            text-decoration: none; 
+        }
+        header a:hover { 
+            text-decoration: underline; 
+        }
+        header .signin-button { 
+            background-color: #1a73e8; 
+            color: white; 
+            padding: 7px 15px; 
+            border-radius: 4px; 
+            text-decoration: none; 
+            font-weight: bold; 
+        }
+        header .signin-button:hover { 
+            background-color: #185abc; 
+            box-shadow: 0 1px 2px 0 rgba(66,133,244,0.3), 0 1px 3px 1px rgba(66,133,244,0.15); 
+        }
+        main { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            padding-top: 8vh; 
+        }
+        .logo h1 { 
+            font-size: 70px; 
+            font-weight: normal; 
+            color: #4285F4; 
+            margin: 0; 
+            margin-bottom: 25px; 
+            letter-spacing: -1px; 
+            text-align: center; 
+        }
+        .input-area { 
+            max-width: 580px; 
+            width: 90%; 
+            margin-bottom: 15px; 
+            display: flex; 
+            align-items: center; 
+            border: 1px solid #dfe1e5; 
+            border-radius: 24px; 
+            padding: 5px 15px; 
+            box-shadow: none; 
+            transition: box-shadow 0.3s ease; 
+            background-color: #fff; 
+        }
+        .input-area:hover, 
+        .input-area:focus-within { 
+            border-color: rgba(223,225,229,0); 
+            box-shadow: 0 1px 6px rgba(32,33,36,0.28); 
+        }
+        .input-area .search-icon { 
+            color: #9aa0a6; 
+            margin-right: 10px; 
+            font-size: 18px; 
+        }
+        .input-area input[type="text"] { 
+            flex-grow: 1; 
+            border: none; 
+            outline: none; 
+            padding: 10px 0; 
+            font-size: 16px; 
+            background-color: transparent; 
+            width: 100%; 
+        }
+        .text-input-label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-size: 0.9em; 
+            font-weight: bold; 
+            color: #3c4043; 
+        }
+        .form-container { 
+            max-width: 580px; 
+            width: 90%; 
+            text-align: left; 
+        }
+        .file-input-label { 
+            display: block; 
+            margin: 10px 0 5px 0; 
+            font-size: 0.9em; 
+            font-weight: bold; 
+            color: #3c4043; 
+        }
+        input[type="file"] { 
+            display: block; 
+            margin-bottom: 15px; 
+            color: #3c4043; 
+            font-size: 0.9em; 
+        }
+        .buttons { 
+            display: flex; 
+            justify-content: center; 
+            margin-bottom: 25px; 
+            margin-top: 20px; 
+        }
+        .buttons button { 
+            background-color: #f8f9fa; 
+            border: 1px solid #f8f9fa; 
+            border-radius: 4px; 
+            color: #3c4043; 
+            font-size: 14px; 
+            padding: 10px 16px; 
+            margin: 0 6px; 
+            cursor: pointer; 
+            transition: border-color 0.1s ease, box-shadow 0.1s ease; 
+        }
+        .buttons button:hover { 
+            border-color: #dadce0; 
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1); 
+        }
+        .buttons button:focus { 
+            border-color: #4285f4; 
+            outline: none; 
+        }
+        .clear-button { 
+            margin-left: 10px; 
+            padding: 10px 16px; 
+            font-size: 14px; 
+            background-color: #f8f9fa; 
+            border: 1px solid #dadce0; 
+            border-radius: 4px; 
+            color: #3c4043; 
+            text-decoration: none; 
+        }
+        .clear-button:hover { 
+            border-color: #c6c6c6; 
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1); 
+        }
+        .results-container { 
+            max-width: 700px; 
+            width: 90%; 
+            margin-top: 40px; 
+            padding: 20px; 
+            background-color: #fff; 
+            border: 1px solid #dfe1e5; 
+            border-radius: 8px; 
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1); 
+            text-align: left; 
+        }
+        .results-container h2, 
+        .results-container h3 { 
+            color: #202124; 
+            border-bottom: 1px solid #eee; 
+            padding-bottom: 5px; 
+            margin-top: 0; 
+            margin-bottom: 15px; 
+        }
+        .results-container pre { 
+            display: none; 
+        }
+        .results-summary { 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin-bottom: 20px; 
+            font-weight: bold; 
+        }
+        .issues-found { 
+            background-color: #fdd; 
+            border: 1px solid #fbb; 
+            color: #a00; 
+        }
+        .no-issues-found { 
+            background-color: #e6f4ea; 
+            border: 1px solid #c6e1cf; 
+            color: #137333; 
+        }
+        .findings-list { 
+            list-style: none; 
+            padding: 0; 
+        }
+        .findings-list li { 
+            border: 1px solid #e0e0e0; 
+            border-radius: 4px; 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            background-color: #fff; 
+        }
+        .finding-details { 
+            margin-bottom: 5px; 
+        }
+        .finding-category { 
+            font-weight: bold; 
+            color: #333; 
+            margin-right: 10px; 
+        }
+        .finding-type { 
+            font-style: italic; 
+            color: #5f6368; 
+        }
+        .finding-value { 
+            display: block; 
+            font-family: monospace; 
+            background-color: #eee; 
+            padding: 3px 6px; 
+            border-radius: 3px; 
+            margin-top: 5px; 
+            word-break: break-all; 
+        }
+        .finding-description { 
+            font-size: 0.9em; 
+            color: #5f6368; 
+            margin-top: 3px; 
+        }
+        .analysis-source { 
+            font-style: italic; 
+            color: #5f6368; 
+            margin-bottom: 15px; 
+            padding-bottom: 10px; 
+            border-bottom: 1px dashed #ccc; 
+        }
+        .disclaimer { 
+            font-size: 0.85em; 
+            color: #70757a; 
+            margin-top: 20px; 
+            border-top: 1px dashed #ccc; 
+            padding-top: 10px; 
+        }
+        .llm-response-container { 
+            max-width: 700px; 
+            width: 90%; 
+            margin-top: 40px; 
+            padding: 20px; 
+            background-color: #fff; 
+            border: 1px solid #dfe1e5; 
+            border-radius: 8px; 
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1); 
+            text-align: left; 
+        }
+        .llm-response-container h2 { 
+            color: #202124; 
+            border-bottom: 1px solid #eee; 
+            padding-bottom: 5px; 
+            margin-top: 0; 
+            margin-bottom: 15px; 
+        }
+        .llm-response-container p { 
+            font-size: 0.9em; 
+            color: #5f6368; 
+            margin-bottom: 10px; 
+        }
+        footer { 
+            background: #f2f2f2; 
+            padding: 15px 30px; 
+            font-size: 13px; 
+            color: #70757a; 
+            border-top: 1px solid #e4e4e4; 
+            display: flex; 
+            justify-content: space-between; 
+            flex-wrap: wrap; 
+            margin-top: auto; 
+        }
+        @media (max-width: 600px) { 
+            footer { 
+                justify-content: center; 
+            } 
+            .footer-links-left, 
+            .footer-links-right { 
+                text-align: center; 
+                width: 100%; 
+                margin-bottom: 10px; 
+            } 
+        }
+        footer a { 
+            color: #70757a; 
+            padding: 0 10px; 
+        }
+        .error-message { 
+            max-width: 580px; 
+            width: 90%; 
+            color: #D8000C; 
+            background-color: #FFD2D2; 
+            border: 1px solid #D8000C; 
+            padding: 10px 15px; 
+            margin: 15px auto 0 auto; 
+            border-radius: 4px; 
+            font-size: 0.9em; 
+            text-align: center; 
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="#">About</a>
+        <a href="#">Features</a>
+        <a href="#" class="signin-button">Sign In</a>
+    </header>
+
+    <main>
+        <div class="logo">
+            <h1>GenAI Shield</h1>
+        </div>
+
+        <!-- Display error messages if any -->
+        {% if error %}
+            <div class="error-message">{{ error }}</div>
+        {% endif %}
+
+        <!-- Form container for text and file input -->
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('home') }}" enctype="multipart/form-data">
+                <!-- Text Input Area -->
+                <label for="text_input" class="text-input-label">Paste text here OR upload a file below:</label>
+                <div class="input-area">
+                    <span class="search-icon">📄</span>
+                    <input type="text" id="text_input" name="text_to_analyze" placeholder="Enter text..." value="{{ original_text or '' }}">
+                </div>
+
+                <!-- File Input Area -->
+                <label for="file_input" class="file-input-label">Upload Document (.txt, .pdf, .docx):</label>
+                <input type="file" id="file_input" name="file_to_analyze" accept=".txt,.pdf,.docx">
+
+                <!-- Buttons -->
+                <div class="buttons">
+                    <button type="submit">Analyze Content</button>
+                    <a href="{{ url_for('home') }}" class="clear-button">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Section (Conditionally Displayed) -->
+        {% if results %}
+        <div class="results-container">
+            <h2>Analysis Results</h2>
+            <div class="analysis-source">
+                {% if uploaded_filename %}
+                    Source: Uploaded file '<strong>{{ uploaded_filename }}</strong>'
+                {% else %}
+                    Source: Text Input
+                {% endif %}
+            </div>
+
+            <!-- Display summary -->
+            {% if results.found_issues %}
+                <div class="results-summary issues-found">
+                    ⚠️ Potential sensitive information detected based on configured rules. Review {{ results.findings | length }} potential issue(s) below.
+                </div>
+                <h3>Potential Issues Found:</h3>
+                <ul class="findings-list">
+                    {% for finding in results.findings %}
+                    <li>
+                        <div class="finding-details">
+                            <span class="finding-category">Category: {{ finding.category }}</span>
+                            <span class="finding-type">({{ finding.type }})</span>
+                        </div>
+                        <span class="finding-value">{{ finding.value }}</span>
+                        <div class="finding-description">{{ finding.description }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="results-summary no-issues-found">
+                    {% if uploaded_filename %}
+                        ✅ No obvious sensitive information detected in '<strong>{{ uploaded_filename }}</strong>' based on current rules.
+                    {% else %}
+                        ✅ No obvious sensitive information detected in the provided text based on current rules.
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="disclaimer">
+                <strong>Disclaimer:</strong> This check uses predefined keywords and patterns to identify potential sensitive information. It may not catch all issues or may flag items incorrectly. Use this as a starting point for review.
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- New LLM Response Section (Conditionally Displayed) -->
+        {% if llm_response %}
+        <div class="llm-response-container">
+            <h2>LLM Response</h2>
+            {% if results.found_issues %}
+            <p>The following response is based on the redacted text (sensitive data removed).</p>
+            {% else %}
+            <p>The following response is based on the original text.</p>
+            {% endif %}
+            <p>{{ llm_response }}</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer>
+        <div class="footer-links-left">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+        </div>
+        <div class="footer-links-right">
+            <a href="#">Contact</a>
+            <a href="#">Help</a>
+        </div>
+    </footer>
+
+    <script>
+        (function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92b00ce1deeab0ee',t:'MTc0Mzc2MTc4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+    </script>
+</body>
+</html>
