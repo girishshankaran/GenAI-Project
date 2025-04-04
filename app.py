@@ -90,7 +90,12 @@ HF_API_KEY = os.environ.get("HF_API_KEY")
 if not HF_API_KEY:
     print("WARNING: HF_API_KEY environment variable not set. LLM functionality will be disabled.")
 
-API_URL = "https://api-inference.huggingface.co/models/google/gemma-7b-it" # Example
+# *** UPDATED MODEL URL ***
+# Switch to a model suitable for the free Inference API tier
+# Note: Ensure you have accepted terms for this model on Hugging Face website!
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+# API_URL = "https://api-inference.huggingface.co/models/google/gemma-7b-it" # Gemma is too large for free tier
+
 headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
 # --- LLM Query Function ---
@@ -101,20 +106,24 @@ def query_llm(text):
     if not text or not isinstance(text, str) or not text.strip():
         return "[LLM Query Skipped - Input text is empty or invalid]"
 
-    prompt = f"Process the following text and provide a relevant response (e.g., summarize, answer questions implied, analyze sentiment):\n\n---\n{text}\n---\n\nResponse:"
+    # Adjust prompt slightly for Mistral Instruct format if needed, though generic often works
+    prompt = f"Process the following text and provide a relevant response:\n\n---\n{text}\n---\n\nResponse:"
+    # Mistral official format uses [INST] [/INST] tags, but often works without for simple tasks.
+    # prompt = f"[INST] Process the following text and provide a relevant response:\n\n{text} [/INST]"
 
     try:
         payload = {
             "inputs": prompt,
             "parameters": {
-                "max_new_tokens": 250,
+                "max_new_tokens": 250, # Adjust as needed
                 "return_full_text": False,
                 "temperature": 0.7,
                 "top_p": 0.9,
             }
+            # Mistral might not need do_sample explicitly if temp/top_p are set
         }
         print(f"Sending request to LLM: {API_URL}")
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=90) # Increased timeout slightly
         response.raise_for_status()
 
         result = response.json()
@@ -125,31 +134,51 @@ def query_llm(text):
             if isinstance(result[0], dict) and 'generated_text' in result[0]:
                 generated_text = result[0]['generated_text']
             elif isinstance(result[0], str):
-                 generated_text = result[0]
+                 generated_text = result[0] # Some simpler models might return string directly
         elif isinstance(result, dict) and 'generated_text' in result:
-             generated_text = result.get('generated_text')
+             generated_text = result.get('generated_text') # Check top-level dict too
 
         if generated_text:
+             # Sometimes models might include the prompt in the response even with return_full_text=False
+             # Basic check to remove prompt if it appears at the start (adapt if needed)
+            if generated_text.strip().startswith(prompt.strip()):
+                 generated_text = generated_text[len(prompt):].strip()
+            elif "Response:" in generated_text: # Find the response marker
+                 generated_text = generated_text.split("Response:", 1)[-1].strip()
+
             return generated_text.strip()
         else:
             print(f"Could not extract 'generated_text' from LLM response: {result}")
+            # Check for specific error messages from HF API within the response
+            if isinstance(result, dict) and 'error' in result:
+                 api_error = result['error']
+                 print(f"Hugging Face API Error Message: {api_error}")
+                 # Check if it's the 'model is loading' error
+                 if isinstance(api_error, str) and "currently loading" in api_error.lower():
+                      estimated_time = result.get('estimated_time', 'unknown')
+                      return f"[LLM Info: Model is currently loading, please wait ({estimated_time:.1f}s estimated) and try again.]"
+                 else:
+                     return f"[Error: Received error from API: {api_error}]" # Return the specific API error
             return "[Error: LLM response format unexpected or empty]"
 
     except requests.exceptions.Timeout:
-        print(f"Error querying LLM: Request timed out after 60 seconds.")
+        print(f"Error querying LLM: Request timed out.")
         return "[Error: LLM request timed out]"
     except requests.exceptions.RequestException as e:
         error_detail = str(e); status_code = "N/A"; resp_text = "N/A"
         if e.response is not None:
-            status_code = e.response.status_code; resp_text = e.response.text[:500]
+            status_code = e.response.status_code; resp_text = e.response.text[:500] # Get first 500 chars of response
         print(f"Error querying LLM ({API_URL}): {error_detail} | Status Code: {status_code} | Response: {resp_text}")
         if status_code == 401: return "[Error querying LLM: Authorization failed (401). Check your HF_API_KEY.]"
-        elif status_code == 403: return f"[Error querying LLM: Forbidden (403). Ensure you accepted the terms for model {API_URL.split('/')[-1]} on Hugging Face.]" # Added 403 specific message
+        elif status_code == 403: return f"[Error querying LLM: Forbidden (403). Ensure you accepted the terms for model {API_URL.split('/')[-1]} on Hugging Face.]"
         elif status_code == 429: return "[Error querying LLM: Rate limit possibly exceeded (429).]"
-        elif status_code >= 500: return f"[Error querying LLM: Server error ({status_code}). Model might be loading or unavailable. Try again later.]"
+        # Handle 503 Service Unavailable (often means model loading)
+        elif status_code == 503: return "[Error querying LLM: Service Unavailable (503). Model might be loading or temporarily down. Try again later.]"
+        elif status_code >= 500: return f"[Error querying LLM: Server error ({status_code}). Try again later.]"
         else: return f"[Error querying LLM: {str(e)}]"
     except (IndexError, KeyError, TypeError) as e:
-        print(f"Error parsing LLM response: {e}. Response was: {result}")
+        # Include result in the print for better debugging
+        print(f"Error parsing LLM response: {e}. Response was: {result if 'result' in locals() else 'Not available'}")
         return "[Error: Invalid response structure from LLM]"
     except Exception as e:
         print(f"An unexpected error occurred during LLM query: {e}")
@@ -159,17 +188,18 @@ def query_llm(text):
 # --- Redaction Functions ---
 PLACEHOLDER_MAP = {
     "Email Address": "[EMAIL]", "Phone Number Format (US)": "[PHONE]",
-    "SSN Format (US)": "[SSN]", "Potential Credit Card": "[CREDIT_CARD]",
-    "API Key Format": "[API_KEY]", "Private Key Block": "[PRIVATE_KEY]",
-    "Internal/Local IP": "[IP_ADDRESS]", "UUID Format": "[UUID]",
-    "Secret Assignment": "[SECRET_VALUE]", "Password Assignment": "[PASSWORD_VALUE]",
-    "Credential Assignment": "[CREDENTIAL_VALUE]", "Username Assignment": "[USERNAME_VALUE]",
-    "Bank Account Number": "[BANK_ACCOUNT]", "Date Format (MM/DD/YY or YYYY)": "[DATE]",
-    "Project Codename": "[PROJECT_CODENAME]", "Potential Generic Key/Token": "[GENERIC_KEY]",
-    "JSON Key Pair": "[JSON_SECRET_PAIR]", "Credentials": "[CREDENTIAL]",
-    "Personal Data (PII)": "[PII]", "Confidential/Secret": "[CONFIDENTIAL_INFO]",
-    "Legal": "[LEGAL_TERM]", "Intellectual Property": "[IP_INFO]",
-    "Network": "[NETWORK_INFO]", "Identifier": "[IDENTIFIER]",
+    "SSN Format (US)": "[SSN]", "Potential SSN (Loose Format)": "[SSN_LIKE]",
+    "Potential Credit Card": "[CREDIT_CARD]", "API Key Format": "[API_KEY]",
+    "Private Key Block": "[PRIVATE_KEY]", "Internal/Local IP": "[IP_ADDRESS]",
+    "UUID Format": "[UUID]", "Secret Assignment": "[SECRET_VALUE]",
+    "Password Assignment": "[PASSWORD_VALUE]", "Credential Assignment": "[CREDENTIAL_VALUE]",
+    "Username Assignment": "[USERNAME_VALUE]", "Bank Account Number": "[BANK_ACCOUNT]",
+    "Date Format (MM/DD/YY or YYYY)": "[DATE]", "Project Codename": "[PROJECT_CODENAME]",
+    "Potential Generic Key/Token": "[GENERIC_KEY]", "JSON Key Pair": "[JSON_SECRET_PAIR]",
+    "Credentials": "[CREDENTIAL]", "Personal Data (PII)": "[PII]",
+    "Confidential/Secret": "[CONFIDENTIAL_INFO]", "Legal": "[LEGAL_TERM]",
+    "Intellectual Property": "[IP_INFO]", "Network": "[NETWORK_INFO]",
+    "Identifier": "[IDENTIFIER]", "Keyword": "[KEYWORD]" # Added generic keyword placeholder
 }
 
 def get_placeholder(finding):
@@ -210,49 +240,61 @@ def perform_confidentiality_check(text):
     if not text or not isinstance(text, str): return {"found_issues": False, "findings": []}
     findings = []; processed_text_positions = set()
     def add_finding(category, type, value, description, start_index, end_index):
-        if not (0 <= start_index < end_index <= len(text)): return
+        # Check span validity relative to text length *before* proceeding
+        if not (0 <= start_index < end_index <= len(text)):
+             print(f"Warning: Invalid span ({start_index},{end_index}) for value '{value[:50]}...' - Text length {len(text)}. Skipping.")
+             return
         span = (start_index, end_index)
-        if any(i in processed_text_positions for i in range(start_index, end_index)): return
+        # Check for overlap with already added findings
+        if any(i in processed_text_positions for i in range(start_index, end_index)):
+             # Optional: Add logging here if you want to see skipped overlaps
+             # print(f"Debug: Skipping overlapping finding {type} at {span}")
+             return
         findings.append({"category": category, "type": type, "value": value, "description": description, "span": span})
         for i in range(start_index, end_index): processed_text_positions.add(i)
 
     keyword_categories = {
         "Legal": [r"attorney-client\s+privilege", r"legal\s+hold", r"litigation", r"confidential\s+settlement", r"under\s+seal", r"privileged\s+and\s+confidential", r"cease\s+and\s+desist", r"nda", r"non-disclosure\s+agreement"],
-        "Confidential/Secret": [r"confidential", r"proprietary", r"secret", r"internal\s+use\s+only", r"trade\s+secret", r"classified", r"sensitive", r"do\s+not\s+distribute", r"private", r"restricted", r"not\s+for\s+public\s+release"],
+        "Confidential/Secret": [r"confidential", r"proprietary", r"secret", r"internal\s+use\s+only", r"trade\s+secret", r"classified", r"sensitive", r"do\s+not\s+distribute", r"private", r"restricted", r"not\s+for\s+public\s+release",
+                              r"password", r"secret key", r"api key", r"credential", r"token"],
         "Intellectual Property": [r"patent\s+pending", r"patent\s+application", r"trademark", r"copyright", r"invention\s+disclosure", r"prototype", r"roadmap", r"research\s+findings", r"algorithm", r"proprietary\s+algorithm"],
-        "Personal Data (PII)": [r"dob", r"date\s+of\s+birth", r"passport\s+number", r"driver'?s\s+license", r"address"],
+        "Personal Data (PII)": [r"dob", r"date\s+of\s+birth", r"passport\s+number", r"driver'?s\s+license", r"address",
+                                r"ssn", r"social security number", r"credit card", r"bank account", r"email address", r"phone number"],
     }
     original_text = text; lower_text = original_text.lower()
     temp_keyword_findings = []; keyword_processed_positions_check = set()
-    if lower_text:
+    if lower_text: # Find potential keyword positions first
         for category, keywords in keyword_categories.items():
             for keyword_pattern in keywords:
                 try:
                     for match in re.finditer(r'\b' + keyword_pattern + r'\b', lower_text, re.IGNORECASE):
                         start, end = match.start(), match.end()
+                        # Check for self-overlap during this phase
                         if not any(pos in keyword_processed_positions_check for pos in range(start, end)):
+                            # Store finding details with original casing value
                             temp_keyword_findings.append({"category": category, "type": "Keyword", "value": original_text[start:end], "description": f"Detected keyword: '{original_text[start:end]}'.", "span": (start, end)})
                             for i in range(start, end): keyword_processed_positions_check.add(i)
                 except re.error as e: print(f"Warning: Skipping invalid regex keyword: '{keyword_pattern}' - {e}")
 
-    # *** Regex list including the corrected Password Assignment pattern ***
+    # *** REGEX LIST including the corrected Private Key pattern ***
     regex_patterns = [
-        # Credentials / Secrets - Capturing Keyword + Value
-        # Allow separators like ' is ', ':', '=' or just space before the value
+        # Credentials / Secrets
         (r'\b(password|passwd|secret|pwd|pass)\b(?:\s+(?:is|was|are|be)\s+|\s*[:=]\s*|\s+)(\S+)', "Password Assignment", "Credentials", "Potential password assignment.", re.IGNORECASE),
         (r'\b(api_?key|access_?key|secret_?key|token|credential|auth_token)\s*[:=]\s*(["\']?\S+["\']?)', "Credential Assignment", "Credentials", "Potential API key/token/secret assignment.", re.IGNORECASE),
         (r'\b(user(?: |_)name|user|login|user_?id)\s*[:=]\s*\S+', "Username Assignment", "Credentials", "Potential username or login ID assignment.", re.IGNORECASE),
         (r'\b(sk_live|pk_live|rk_live|sk_test|pk_test|rk_test)_[0-9a-zA-Z]{24,}\b', "API Key Format", "Credentials", "Common API key format (e.g., Stripe)."),
-        (r'-----BEGIN (?:RSA|OPENSSH|PGP|DSA|EC) PRIVATE KEY-----.*?-----END \1 PRIVATE KEY-----', "Private Key Block", "Credentials", "Private key block detected.", re.DOTALL | re.IGNORECASE),
+        # Corrected: Use capturing group for \1 backreference
+        (r'-----BEGIN (RSA|OPENSSH|PGP|DSA|EC) PRIVATE KEY-----.*?-----END \1 PRIVATE KEY-----', "Private Key Block", "Credentials", "Private key block detected.", re.DOTALL | re.IGNORECASE),
         (r'\b[a-zA-Z0-9\+\/]{40,}\b', "Potential Generic Key/Token", "Credentials", "High entropy string (potential key/token)."),
         (r'"(?:access_key|secret_key|api_key|token)"\s*:\s*"([^"]+)"', "JSON Key Pair", "Credentials", "Potential sensitive keys in JSON.", re.IGNORECASE),
 
-        # Personal Data (PII) - Capturing Indicator + Value or Specific Formats
+        # Personal Data (PII)
         (r'\b(ssn|social security(?: number)?)\s*(?:is|:|=)?\s*(\d{3}-?\d{2}-?\d{4})\b', "SSN Format (US)", "Personal Data (PII)", "US SSN pattern with indicator.", re.IGNORECASE),
         (r'(?<!\d-)\b(\d{3}-\d{2}-\d{4})\b(?!\d)', "SSN Format (US)", "Personal Data (PII)", "US SSN pattern (standalone)."),
+        (r'(?<!\d-)\b(\d{7}|\d{9})\b(?!\d)', "Potential SSN (Loose Format)", "Personal Data (PII)", "7 or 9 digits (standalone, potential SSN)."),
         (r'\b(credit card|cc|card number|cc#|card no)\s*(?:is|:|=)?\s*(\d[\d -]{11,18}\d)\b', "Potential Credit Card", "Personal Data (PII)", "Potential Credit Card Number with indicator.", re.IGNORECASE),
         (r'\b(\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4})\b', "Potential Credit Card", "Personal Data (PII)", "16 digits in groups of 4."),
-        (r'\b(bank account(?: number| no)?|account no|account number|acct no)\s*(?:is|:|=)?\s*(\d[\d\s-]{5,}\d?)', "Bank Account Number", "Personal Data (PII)", "Potential bank account number.", re.IGNORECASE),
+        (r'\b(bank account(?: number| no)?|account no|account number|acct no)\s*(?:is|:|=|,?\s+which\s+is)?\s*(\d[\d\s-]{5,}\d?)', "Bank Account Number", "Personal Data (PII)", "Potential bank account number.", re.IGNORECASE),
         (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', "Email Address", "Personal Data (PII)", "Email address format."),
         (r'\(?\b\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b', "Phone Number Format (US)", "Personal Data (PII)", "US phone number format."),
         (r'\b(0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])[-/](?:19|20)?\d{2}\b', "Date Format (MM/DD/YY or YYYY)", "Personal Data (PII)", "Date format (MM/DD/YYYY)."),
@@ -264,22 +306,30 @@ def perform_confidentiality_check(text):
         # Project / Internal Naming
         (r'\b(?:Project|Codename|Initiative)[ -_]([A-Z][a-zA-Z0-9]+(?:[ -_][A-Z][a-zA-Z0-9]+)*)\b', "Project Codename", "Intellectual Property", "Potential project codename."),
     ]
-    # *** End of Regex list ***
+    # *** END OF REGEX LIST ***
 
-    if original_text: # Process Regex patterns first
+    if original_text: # Process Regex patterns first - they are generally more specific
         for item in regex_patterns:
             pattern, type, category, description = item[0], item[1], item[2], item[3]
             flags = item[4] if len(item) > 4 else 0
             try:
                 for match in re.finditer(pattern, original_text, flags=flags):
-                    value = match.group(0); start, end = match.start(), match.end()
-                    if value and start < end: add_finding(category, type, value, description, start, end)
+                    # Extract value and span from the match object
+                    value = match.group(0) # Get the entire matched string
+                    start, end = match.start(), match.end()
+                    # Add finding if value is not empty and span is valid
+                    if value and start < end:
+                        add_finding(category, type, value, description, start, end)
             except re.error as e: print(f"Warning: Skipping invalid regex pattern: {pattern} - {e}")
-            except IndexError as e: print(f"Warning: Index error during regex: {pattern} - {e}")
-    for kw_finding in temp_keyword_findings: # Add keywords if space not taken by regex
+            except IndexError as e: print(f"Warning: Index error during regex {pattern} - {e}") # Catch potential group index errors
+    # Now add the keyword findings *only if* their positions haven't already been covered by a regex finding
+    for kw_finding in temp_keyword_findings:
+         # Use the add_finding function which handles overlap checks
          add_finding(kw_finding["category"], kw_finding["type"], kw_finding["value"], kw_finding["description"], kw_finding["span"][0], kw_finding["span"][1])
+    # Final sort before returning (helps redaction function, though add_finding prevents most overlaps)
     sorted_findings = sorted(findings, key=lambda f: (f['span'][0], -f['span'][1]))
     return {"found_issues": len(sorted_findings) > 0, "findings": sorted_findings}
+
 
 # --- Flask Routes ---
 @app.route('/', methods=['GET', 'POST'])
@@ -361,6 +411,7 @@ if __name__ == '__main__':
     if HF_API_KEY:
         print(f"Using Hugging Face API Key: YES")
         print(f"Using LLM Endpoint: {API_URL}")
+        print("Ensure you have accepted terms for the selected model on huggingface.co") # Reminder
     else:
         print("WARNING: Hugging Face API Key (HF_API_KEY) not found.")
         print("         LLM functionality will be disabled.")
