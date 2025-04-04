@@ -144,7 +144,6 @@ def query_llm(text):
             status_code = e.response.status_code; resp_text = e.response.text[:500]
         print(f"Error querying LLM ({API_URL}): {error_detail} | Status Code: {status_code} | Response: {resp_text}")
         if status_code == 401: return "[Error querying LLM: Authorization failed (401). Check your HF_API_KEY.]"
-        elif status_code == 403: return f"[Error querying LLM: Forbidden (403). Ensure you accepted the terms for model {API_URL.split('/')[-1]} on Hugging Face.]" # Added 403 specific message
         elif status_code == 429: return "[Error querying LLM: Rate limit possibly exceeded (429).]"
         elif status_code >= 500: return f"[Error querying LLM: Server error ({status_code}). Model might be loading or unavailable. Try again later.]"
         else: return f"[Error querying LLM: {str(e)}]"
@@ -196,7 +195,7 @@ def redact_text(text, findings):
         overlaps = any(i in processed_indices for i in range(start, end))
         if overlaps: continue
         if start >= last_end: redacted += text[last_end:start]
-        else: print(f"Warning: Overlap detected - Adjusting start. Finding: {finding}")
+        else: print(f"Warning: Overlap detected - Adjusting start. Finding: {finding}") # Should be rare now
         placeholder = get_placeholder(finding)
         redacted += placeholder
         last_end = end
@@ -235,11 +234,10 @@ def perform_confidentiality_check(text):
                             for i in range(start, end): keyword_processed_positions_check.add(i)
                 except re.error as e: print(f"Warning: Skipping invalid regex keyword: '{keyword_pattern}' - {e}")
 
-    # *** Regex list including the corrected Password Assignment pattern ***
+    # *** THIS IS THE UPDATED REGEX LIST ***
     regex_patterns = [
         # Credentials / Secrets - Capturing Keyword + Value
-        # Allow separators like ' is ', ':', '=' or just space before the value
-        (r'\b(password|passwd|secret|pwd|pass)\b(?:\s+(?:is|was|are|be)\s+|\s*[:=]\s*|\s+)(\S+)', "Password Assignment", "Credentials", "Potential password assignment.", re.IGNORECASE),
+        (r'\b(password|passwd|secret|pwd|pass)\s*[:=]\s*\S+', "Password Assignment", "Credentials", "Potential password assignment.", re.IGNORECASE),
         (r'\b(api_?key|access_?key|secret_?key|token|credential|auth_token)\s*[:=]\s*(["\']?\S+["\']?)', "Credential Assignment", "Credentials", "Potential API key/token/secret assignment.", re.IGNORECASE),
         (r'\b(user(?: |_)name|user|login|user_?id)\s*[:=]\s*\S+', "Username Assignment", "Credentials", "Potential username or login ID assignment.", re.IGNORECASE),
         (r'\b(sk_live|pk_live|rk_live|sk_test|pk_test|rk_test)_[0-9a-zA-Z]{24,}\b', "API Key Format", "Credentials", "Common API key format (e.g., Stripe)."),
@@ -264,7 +262,7 @@ def perform_confidentiality_check(text):
         # Project / Internal Naming
         (r'\b(?:Project|Codename|Initiative)[ -_]([A-Z][a-zA-Z0-9]+(?:[ -_][A-Z][a-zA-Z0-9]+)*)\b', "Project Codename", "Intellectual Property", "Potential project codename."),
     ]
-    # *** End of Regex list ***
+    # *** END OF UPDATED REGEX LIST ***
 
     if original_text: # Process Regex patterns first
         for item in regex_patterns:
