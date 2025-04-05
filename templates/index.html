@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GenAI Shield</title>
     <style>
-        /* --- Existing styles from your file --- */
+        /* --- Styles from previous version --- */
         body {
             font-family: Arial, sans-serif;
             padding: 0;
@@ -49,10 +49,10 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            padding-top: 5vh; /* Reduced top padding slightly */
+            padding-top: 5vh;
         }
         .logo h1 {
-            font-size: 60px; /* Slightly smaller */
+            font-size: 60px;
             font-weight: normal;
             color: #4285F4;
             margin: 0;
@@ -61,7 +61,7 @@
             text-align: center;
         }
         .form-container {
-            max-width: 650px; /* Increased width slightly */
+            max-width: 650px;
             width: 95%;
             text-align: left;
             background-color: #fff;
@@ -71,13 +71,13 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
             margin-bottom: 30px;
         }
-        .input-area { /* Now styling the textarea container */
+        .input-area {
             width: 100%;
             margin-bottom: 15px;
             display: flex;
-            align-items: flex-start; /* Align icon to top */
+            align-items: flex-start;
             border: 1px solid #dfe1e5;
-            border-radius: 8px; /* Less rounded */
+            border-radius: 8px;
             padding: 10px 15px;
             box-shadow: none;
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
@@ -85,28 +85,27 @@
         }
         .input-area:hover,
         .input-area:focus-within {
-            border-color: #aaa; /* Darker border on focus/hover */
+            border-color: #aaa;
             box-shadow: 0 1px 6px rgba(32,33,36,0.1);
         }
-        .input-area .input-icon { /* Renamed from search-icon */
+        .input-area .input-icon {
             color: #9aa0a6;
             margin-right: 10px;
             font-size: 18px;
-            padding-top: 8px; /* Align icon better with first line */
+            padding-top: 8px;
         }
-         /* Use textarea instead of input type="text" */
         .input-area textarea {
             flex-grow: 1;
             border: none;
             outline: none;
-            padding: 8px 0; /* Vertical padding */
+            padding: 8px 0;
             font-size: 16px;
             background-color: transparent;
             width: 100%;
-            resize: vertical; /* Allow vertical resize */
-            min-height: 80px; /* Minimum height */
+            resize: vertical;
+            min-height: 80px;
             line-height: 1.5;
-            font-family: inherit; /* Use body font */
+            font-family: inherit;
         }
         .text-input-label {
             display: block;
@@ -115,10 +114,9 @@
             font-weight: bold;
             color: #3c4043;
         }
-
         .file-input-label {
             display: block;
-            margin: 15px 0 8px 0; /* Increased top margin */
+            margin: 15px 0 8px 0;
             font-size: 0.95em;
             font-weight: bold;
             color: #3c4043;
@@ -133,45 +131,39 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        input[type="file"]::file-selector-button {
-            /* Style the button inside the file input if needed */
-            margin-right: 10px;
-            /* Add other styles */
-        }
-
         .buttons {
             display: flex;
-            justify-content: center; /* Center buttons */
-            margin-bottom: 10px; /* Reduced bottom margin */
-            margin-top: 25px; /* Increased top margin */
+            justify-content: center;
+            margin-bottom: 10px;
+            margin-top: 25px;
         }
-        .buttons button, .clear-button { /* Style both buttons similarly */
-            background-color: #1a73e8; /* Blue background */
+        .buttons button, .clear-button {
+            background-color: #1a73e8;
             border: 1px solid #1a73e8;
             border-radius: 4px;
-            color: #fff; /* White text */
+            color: #fff;
             font-size: 14px;
             font-weight: bold;
-            padding: 10px 24px; /* More padding */
+            padding: 10px 24px;
             margin: 0 8px;
             cursor: pointer;
             transition: background-color 0.2s ease, box-shadow 0.2s ease;
         }
         .buttons button:hover, .clear-button:hover {
-            background-color: #185abc; /* Darker blue */
+            background-color: #185abc;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            text-decoration: none; /* Remove underline from link on hover */
+            text-decoration: none;
         }
         .buttons button:focus, .clear-button:focus {
-            outline: 2px solid #a4c2f4; /* Focus outline */
+            outline: 2px solid #a4c2f4;
              outline-offset: 2px;
         }
         .clear-button {
-            background-color: #f8f9fa; /* Lighter background for clear */
+            background-color: #f8f9fa;
             border: 1px solid #dadce0;
-            color: #3c4043; /* Darker text */
-            text-decoration: none; /* Remove underline */
-            display: inline-flex; /* Align text vertically */
+            color: #3c4043;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
         }
          .clear-button:hover {
@@ -179,11 +171,10 @@
              border-color: #c6c6c6;
              box-shadow: 0 1px 1px rgba(0,0,0,0.1);
          }
-
         .results-container,
-        .redacted-text-container, /* New style */
+        .redacted-text-container,
         .llm-response-container {
-            max-width: 800px; /* Wider results */
+            max-width: 800px;
             width: 95%;
             margin-top: 30px;
             padding: 25px;
@@ -194,10 +185,10 @@
             text-align: left;
         }
         .results-container h2,
-        .redacted-text-container h2, /* New style */
+        .redacted-text-container h2,
         .llm-response-container h2 {
-            color: #1a73e8; /* Blue headings */
-            border-bottom: 2px solid #e8f0fe; /* Lighter blue underline */
+            color: #1a73e8;
+            border-bottom: 2px solid #e8f0fe;
             padding-bottom: 10px;
             margin-top: 0;
             margin-bottom: 20px;
@@ -211,57 +202,47 @@
             margin-bottom: 15px;
             font-size: 1.1em;
         }
-
         .results-summary {
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 25px;
-            font-weight: 500; /* Slightly less bold */
+            font-weight: 500;
             display: flex;
             align-items: center;
         }
-        .results-summary::before { /* Add icon */
+        .results-summary::before {
             font-size: 1.2em;
             margin-right: 10px;
         }
         .issues-found {
-            background-color: #fef7e0; /* Light yellow */
+            background-color: #fef7e0;
             border: 1px solid #fce8b2;
-            color: #754c00; /* Dark yellow/brown */
+            color: #754c00;
         }
-        .issues-found::before {
-             content: '⚠️';
-        }
+        .issues-found::before { content: '⚠️'; }
         .no-issues-found {
             background-color: #e6f4ea;
             border: 1px solid #c6e1cf;
             color: #137333;
         }
-         .no-issues-found::before {
-             content: '✅';
-         }
-        .findings-list {
-            list-style: none;
-            padding: 0;
-        }
+         .no-issues-found::before { content: '✅'; }
+        .findings-list { list-style: none; padding: 0; }
         .findings-list li {
             border: 1px solid #e0e0e0;
-            border-left: 4px solid #fbbc04; /* Yellow indicator */
+            border-left: 4px solid #fbbc04;
             border-radius: 4px;
             padding: 12px 15px;
             margin-bottom: 12px;
             background-color: #fff;
             transition: box-shadow 0.2s ease;
         }
-        .findings-list li:hover {
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        .findings-list li:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .finding-details {
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap; /* Wrap if needed */
+            flex-wrap: wrap;
         }
         .finding-category {
             font-weight: bold;
@@ -279,14 +260,14 @@
         }
         .finding-value {
             display: block;
-            font-family: 'Courier New', Courier, monospace; /* Monospace */
-            background-color: #f1f3f4; /* Light grey background */
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f1f3f4;
             padding: 6px 10px;
             border-radius: 4px;
-            margin: 8px 0; /* Adjusted margin */
+            margin: 8px 0;
             word-break: break-all;
             border: 1px dashed #ccc;
-            color: #d93025; /* Reddish color for found value */
+            color: #d93025;
         }
         .finding-description {
             font-size: 0.9em;
@@ -309,35 +290,32 @@
             padding-top: 15px;
             line-height: 1.4;
         }
-
-        /* Styles for Redacted Text and LLM Response */
         .redacted-text-container p,
         .llm-response-container p {
             font-size: 0.95em;
-            color: #3c4043; /* Darker text */
+            color: #3c4043;
             line-height: 1.6;
             margin-bottom: 15px;
         }
-        .redacted-text-content, /* Class for the <pre> tag */
-        .llm-response-content { /* Class for the LLM response text */
-            font-family: 'Courier New', Courier, monospace; /* Monospace for redacted text */
-            background-color: #f8f9fa; /* Very light grey background */
+        .redacted-text-content,
+        .llm-response-content {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f9fa;
             padding: 15px;
             border-radius: 4px;
             border: 1px solid #e0e0e0;
-            white-space: pre-wrap; /* Wrap long lines but preserve whitespace */
-            word-wrap: break-word; /* Ensure long words break */
-            max-height: 400px; /* Limit height */
-            overflow-y: auto; /* Add scrollbar if needed */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
             font-size: 0.9em;
             color: #202124;
         }
-         .llm-response-content { /* Specific style for LLM if needed different from redacted */
-             font-family: Arial, sans-serif; /* Non-monospace for LLM response */
-             background-color: #e8f0fe; /* Light blue background for LLM response */
+         .llm-response-content {
+             font-family: Arial, sans-serif;
+             background-color: #e8f0fe;
              border-color: #c7d9f7;
          }
-
         footer {
             background: #f2f2f2;
             padding: 15px 30px;
@@ -347,7 +325,7 @@
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
-            margin-top: auto; /* Push footer to bottom */
+            margin-top: auto;
         }
         @media (max-width: 600px) {
             footer { justify-content: center; }
@@ -355,7 +333,6 @@
         }
         footer a { color: #70757a; padding: 0 10px; text-decoration: none; }
         footer a:hover { text-decoration: underline; }
-
         .error-message {
             max-width: 650px;
             width: 95%;
@@ -363,12 +340,11 @@
             background-color: #FFD2D2;
             border: 1px solid #D8000C;
             padding: 12px 18px;
-            margin: 0 auto 20px auto; /* Position below logo */
+            margin: 0 auto 20px auto;
             border-radius: 4px;
             font-size: 0.9em;
             text-align: center;
         }
-
     </style>
 </head>
 <body>
@@ -388,21 +364,18 @@
             <div class="error-message">{{ error }}</div>
         {% endif %}
 
-        <!-- Form container for text and file input -->
+        <!-- Form container -->
         <div class="form-container">
             <form method="POST" action="{{ url_for('home') }}" enctype="multipart/form-data">
-                <!-- Text Input Area using TEXTAREA -->
                 <label for="text_input" class="text-input-label">Paste text here OR upload a file below:</label>
                 <div class="input-area">
                     <span class="input-icon">📄</span>
                     <textarea id="text_input" name="text_to_analyze" placeholder="Enter text to analyze...">{{ original_text or '' }}</textarea>
                 </div>
 
-                <!-- File Input Area -->
                 <label for="file_input" class="file-input-label">Upload Document (.txt, .pdf, .docx):</label>
                 <input type="file" id="file_input" name="file_to_analyze" accept=".txt,.pdf,.docx">
 
-                <!-- Buttons -->
                 <div class="buttons">
                     <button type="submit">Analyze Content</button>
                     <a href="{{ url_for('home') }}" class="clear-button">Clear</a>
@@ -410,7 +383,7 @@
             </form>
         </div>
 
-        <!-- Results Section (Conditionally Displayed) -->
+        <!-- Results Section -->
         {% if results %}
         <div class="results-container">
             <h2>Analysis Results</h2>
@@ -422,7 +395,6 @@
                 {% endif %}
             </div>
 
-            <!-- Display summary -->
             {% if results.found_issues %}
                 <div class="results-summary issues-found">
                     Potential sensitive information detected based on configured rules. Review {{ results.findings | length }} potential issue(s) below. Text sent to LLM has been redacted.
@@ -456,27 +428,35 @@
         </div>
         {% endif %}
 
-        <!-- **** NEW: Redacted Text Display Section **** -->
-        {% if redacted_text is not none %} {# Check if variable exists #}
+        <!-- Redacted Text Display Section -->
+        {% if redacted_text is not none %}
         <div class="redacted-text-container">
             <h2>Text Sent to LLM</h2>
+
+            {# *** UPDATED DYNAMIC TEXT based on placeholders_used list *** #}
             {% if results and results.found_issues %}
-            <p>The following text, with potential sensitive information replaced by placeholders like [EMAIL] or [SSN], was sent to the LLM for processing:</p>
+                {% if placeholders_used %}
+                    {# Construct the example string dynamically #}
+                    {% set examples = placeholders_used[:3] | join(', ') %} {# Show up to 3 examples #}
+                    {% if placeholders_used | length > 3 %}{% set examples = examples + ", etc." %}{% endif %}
+                    <p>The following text, with potential sensitive information replaced by placeholders (e.g., {{ examples }}), was sent to the LLM for processing:</p>
+                {% else %}
+                     {# Fallback if placeholder list wasn't generated #}
+                     <p>The following text, with potential sensitive information replaced by placeholders, was sent to the LLM for processing:</p>
+                {% endif %}
             {% else %}
-            <p>No potential sensitive information requiring redaction was found. The original text below was sent to the LLM:</p>
+                <p>No potential sensitive information requiring redaction was found. The original text below was sent to the LLM:</p>
             {% endif %}
-            {# Use <pre> for preserving whitespace and line breaks #}
+            {# *** END OF UPDATED DYNAMIC TEXT *** #}
+
             <pre class="redacted-text-content">{{ redacted_text }}</pre>
         </div>
         {% endif %}
-        <!-- **** END NEW SECTION **** -->
 
-
-        <!-- LLM Response Section (Conditionally Displayed) -->
+        <!-- LLM Response Section -->
         {% if llm_response %}
         <div class="llm-response-container">
             <h2>LLM Response</h2>
-            {# Removed redundant explanation about redaction as it's covered above #}
             <div class="llm-response-content">{{ llm_response }}</div>
         </div>
         {% endif %}
@@ -496,6 +476,5 @@
         </div>
     </footer>
 
-    {# Removed the Cloudflare script unless you specifically need it #}
 </body>
 </html>
