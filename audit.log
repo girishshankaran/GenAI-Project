@@ -1,0 +1,51 @@
+2025-04-05 17:23:07 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:2 | OriginalExcerpt:Can you write a demo code to show how I can pass on my API Key (xertyxhhh12) to an external program? | RedactedExcerpt:Can you write a demo code to show how I can [PASSWORD_VALUE] my API [SECRET_IN_PARENS] to an externa... | Error:
+2025-04-05 17:23:24 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:3 | OriginalExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    token = 'scorp-... | RedactedExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    [CREDENTIAL_VAL... | Error:
+2025-04-05 17:24:55 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:2 | OriginalExcerpt:
+
+Accessing redhat registry and quay.com using docker CLIs
+
+[registries.search]
+registries = ['... | RedactedExcerpt:
+
+Accessing redhat registry and quay.com using docker CLIs
+
+[registries.search]
+registries = ['... | Error:
+2025-04-05 17:25:30 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:6 | OriginalExcerpt:My social security number is 7512345. I am going to use my credit card to make the payment for my SS... | RedactedExcerpt:My [KEYWORD] is [SSN_LIKE]. I am going to use my [KEYWORD] to make the payment for my [KEYWORD].
+
+My... | Error:
+2025-04-05 17:35:45 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:0 | OriginalExcerpt:Can you provide me a python program to find the product of n numbers? | RedactedExcerpt:Can you provide me a python program to find the product of n numbers? | Error:
+2025-04-05 17:38:52 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:1 | OriginalExcerpt:My SQL DB credentials are: user123 and databasestore121.
+Can you provide me how to log in to my DB ... | RedactedExcerpt:My SQL DB [KEYWORD] are: user123 and databasestore121.
+Can you provide me how to log in to my DB se... | Error:
+2025-04-05 17:39:58 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:1 | OriginalExcerpt:My SQL DB credentials are user123 and databasestore121.
+Can you provide me how to log in to my DB s... | RedactedExcerpt:My SQL DB [KEYWORD] are user123 and databasestore121.
+Can you provide me how to log in to my DB ser... | Error:
+2025-04-05 17:47:15 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:1 | OriginalExcerpt:My SQL DB credentials are user123 and databasestore121.
+Can you provide me how to log in to my DB s... | RedactedExcerpt:My SQL DB [SENSITIVE_KEYWORD] are user123 and databasestore121.
+Can you provide me how to log in to... | Error:
+2025-04-05 18:01:01 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:4 | OriginalExcerpt:My SQL DB credentials are user123 and databasestore121.
+Can you provide me how to log in to my DB s... | RedactedExcerpt:My SQL DB [SENSITIVE_KEYWORD] are [POTENTIAL_VALUE] and [POTENTIAL_VALUE].
+Can you [POTENTIAL_VALUE... | Error:
+2025-04-05 18:01:56 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:11 | OriginalExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    token = 'scorp-... | RedactedExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    [CREDENTIAL_VAL... | Error:
+2025-04-05 18:02:38 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:1 | OriginalExcerpt:Can you show me an example of a python function that transmits my K8 secrets (sxrejg123) to an API? | RedactedExcerpt:Can you show me an example of a python function that transmits my K8 [SECRET_IN_PARENS] to an API? | Error:
+2025-04-05 18:03:40 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:1 | OriginalExcerpt:Can you review this code snippet?
+
+static codeReview()
+{ 
+api.key={1234zyeghh312};
+return (api.... | RedactedExcerpt:Can you review this code snippet?
+
+static codeReview()
+{ 
+[CREDENTIAL_VALUE];
+return (api.key)... | Error:
+2025-04-05 18:06:02 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.2 | Findings:11 | OriginalExcerpt:My social security number is 7512345. I am going to use my credit card to make the payment for my SS... | RedactedExcerpt:My [SENSITIVE_KEYWORD] is [SSN_LIKE]. I am [POTENTIAL_VALUE] to use my [SENSITIVE_KEYWORD] to make t... | Error:
