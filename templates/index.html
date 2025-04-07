@@ -16,95 +16,62 @@
             background-color:#fff;
             border-bottom:1px solid #e4e4e4
         }
-        header a, header button.header-button { /* Style regular links AND header buttons */
-            margin-left:15px;
-            color:#5f6368;
-            text-decoration:none;
-            background: none; /* Remove default button background */
-            border: none; /* Remove default button border */
-            padding: 0; /* Remove default button padding */
-            font-size: 13px; /* Match link font size */
-            cursor: pointer; /* Make it look clickable */
-            font-family: inherit; /* Use same font as links */
+        header a, header button.header-button, header button.dropdown-trigger { /* Style links AND header buttons/triggers */
+            margin-left:15px; color:#5f6368; text-decoration:none; background: none; border: none; padding: 0; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; -webkit-appearance: none; -moz-appearance: none; appearance: none;
         }
-        header a:hover, header button.header-button:hover {
-            text-decoration:underline;
-        }
+        header a:hover, header button.header-button:hover, header button.dropdown-trigger:hover { text-decoration:underline; }
         header .signin-button{background-color:#1a73e8;color:#fff;padding:7px 15px;border-radius:4px;text-decoration:none;font-weight:700; margin-left: 15px;}
         header .signin-button:hover{background-color:#185abc;box-shadow:0 1px 2px 0 rgba(66,133,244,.3),0 1px 3px 1px rgba(66,133,244,.15); text-decoration:none;}
 
-        /* Dropdown Styles */
-        .dropdown {position: relative; display: inline-block; margin-left: 15px;}
-        .dropdown-trigger {color: #5f6368; cursor: pointer; font-size: 13px; padding: 7px 5px 7px 0; background: none; border: none; text-decoration: none; white-space: nowrap; -webkit-appearance: none; -moz-appearance: none; appearance: none;}
-        .dropdown-trigger:hover {text-decoration: underline;}
-        .dropdown-trigger::after { content: ' ▼'; font-size: 0.8em; margin-left: 4px;}
-        .dropdown-content {display: none; position: absolute; background-color: #ffffff; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 10; border-radius: 4px; padding: 5px 0; right: 0; margin-top: 5px;}
-        .dropdown-content a {color: #202124; padding: 10px 16px; text-decoration: none; display: block; font-size: 13px; text-align: left; white-space: nowrap; cursor: pointer;}
-        .dropdown-content a:hover {background-color: #f1f3f4; text-decoration: none;}
-        .dropdown:hover .dropdown-content {display: block;}
-
-        /* Main Content Styles */
-        main{flex-grow:1;display:flex;flex-direction:column;align-items:center;padding:20px;padding-top:5vh}
-        .logo h1{font-size:60px;font-weight:400;color:#4285f4;margin:0 0 25px;letter-spacing:-1px;text-align:center}
-        .form-container{max-width:650px;width:95%;text-align:left;background-color:#fff;padding:25px;border:1px solid #dfe1e5;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:30px}
-        .input-area{width:100%;margin-bottom:15px;display:flex;align-items:flex-start;border:1px solid #dfe1e5;border-radius:8px;padding:10px 15px;box-shadow:none;transition:box-shadow .3s ease,border-color .3s ease;background-color:#fff}
-        .input-area:focus-within,.input-area:hover{border-color:#aaa;box-shadow:0 1px 6px rgba(32,33,36,.1)}
-        .input-area .input-icon{color:#9aa0a6;margin-right:10px;font-size:18px;padding-top:8px}
-        .input-area textarea{flex-grow:1;border:none;outline:none;padding:8px 0;font-size:16px;background-color:transparent;width:100%;resize:vertical;min-height:80px;line-height:1.5;font-family:inherit}
-        .text-input-label{display:block;margin-bottom:8px;font-size:.95em;font-weight:700;color:#3c4043}
-        .file-input-label{display:block;margin:15px 0 8px;font-size:.95em;font-weight:700;color:#3c4043}
-        input[type=file]{display:block;margin-bottom:20px;color:#3c4043;font-size:.9em;border:1px solid #dfe1e5;padding:8px 12px;border-radius:4px;cursor:pointer}
-        .buttons{display:flex;justify-content:center;margin-bottom:10px;margin-top:25px}
-        .buttons button,.clear-button{background-color:#1a73e8;border:1px solid #1a73e8;border-radius:4px;color:#fff;font-size:14px;font-weight:700;padding:10px 24px;margin:0 8px;cursor:pointer;transition:background-color .2s ease,box-shadow .2s ease}
-        .buttons button:focus,.clear-button:focus{outline:2px solid #a4c2f4;outline-offset:2px}
-        .buttons button:hover,.clear-button:hover{background-color:#185abc;box-shadow:0 1px 2px rgba(0,0,0,.1);text-decoration:none}
-        .clear-button{background-color:#f8f9fa;border:1px solid #dadce0;color:#3c4043;text-decoration:none;display:inline-flex;align-items:center}
-        .clear-button:hover{background-color:#f1f3f4;border-color:#c6c6c6;box-shadow:0 1px 1px rgba(0,0,0,.1)}
-        .llm-response-container,.redacted-text-container,.results-container,.audit-log-container{max-width:800px;width:95%;margin-top:30px;padding:25px;background-color:#fff;border:1px solid #dfe1e5;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);text-align:left}
-        .llm-response-container h2,.redacted-text-container h2,.results-container h2,.audit-log-container h2{color:#1a73e8;border-bottom:2px solid #e8f0fe;padding-bottom:10px;margin-top:0;margin-bottom:20px;font-size:1.4em}
-        .results-container h3{color:#202124;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:25px;margin-bottom:15px;font-size:1.1em}
-        .results-summary{padding:15px;border-radius:4px;margin-bottom:25px;font-weight:500;display:flex;align-items:center}
-        .results-summary::before{font-size:1.2em;margin-right:10px}
-        .issues-found{background-color:#fef7e0;border:1px solid #fce8b2;color:#754c00}
-        .issues-found::before{content:"⚠️"}
-        .no-issues-found{background-color:#e6f4ea;border:1px solid #c6e1cf;color:#137333}
-        .no-issues-found::before{content:"✅"}
-        .findings-list{list-style:none;padding:0}
-        .findings-list li{border:1px solid #e0e0e0;border-left:4px solid #fbbc04;border-radius:4px;padding:12px 15px;margin-bottom:12px;background-color:#fff;transition:box-shadow .2s ease}
-        .findings-list li:hover{box-shadow:0 2px 5px rgba(0,0,0,.1)}
-        .finding-details{margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
-        .finding-category{font-weight:700;color:#333;margin-right:10px;font-size:1.05em}
-        .finding-type{font-style:italic;color:#5f6368;background-color:#f1f3f4;padding:2px 6px;border-radius:10px;font-size:.85em}
-        .finding-value{display:block;font-family:"Courier New",Courier,monospace;background-color:#f1f3f4;padding:6px 10px;border-radius:4px;margin:8px 0;word-break:break-all;border:1px dashed #ccc;color:#d93025}
-        .finding-description{font-size:.9em;color:#5f6368;margin-top:5px}
-        .analysis-source{font-style:italic;color:#5f6368;margin-bottom:20px;padding-bottom:15px;border-bottom:1px dashed #ccc;font-size:.9em}
-        .disclaimer{font-size:.85em;color:#70757a;margin-top:25px;border-top:1px dashed #ccc;padding-top:15px;line-height:1.4}
-        .llm-response-container p,.redacted-text-container p{font-size:.95em;color:#3c4043;line-height:1.6;margin-bottom:15px}
-        .llm-response-content,.redacted-text-content{font-family:"Courier New",Courier,monospace;background-color:#f8f9fa;padding:15px;border-radius:4px;border:1px solid #e0e0e0;white-space:pre-wrap;word-wrap:break-word;max-height:400px;overflow-y:auto;font-size:.9em;color:#202124}
-        .llm-response-content{font-family:Arial,sans-serif;background-color:#e8f0fe;border-color:#c7d9f7}
-        footer{background:#f2f2f2;padding:15px 30px;font-size:13px;color:#70757a;border-top:1px solid #e4e4e4;display:flex;justify-content:space-between;flex-wrap:wrap;margin-top:auto}
-        @media (max-width:600px){footer{justify-content:center}.footer-links-left,.footer-links-right{text-align:center;width:100%;margin-bottom:10px}}
-        footer a{color:#70757a;padding:0 10px;text-decoration:none}
-        footer a:hover{text-decoration:underline}
-        .error-message{max-width:650px;width:95%;color:#d8000c;background-color:#ffd2d2;border:1px solid #d8000c;padding:12px 18px;margin:0 auto 20px;border-radius:4px;font-size:.9em;text-align:center}
-        table.audit-log{width:100%;border-collapse:collapse;margin-top:20px;font-size:.9em;box-shadow:0 2px 5px rgba(0,0,0,.1);background-color:#fff}
-        table.audit-log td,table.audit-log th{border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top}
-        table.audit-log th{background-color:#f2f2f2;font-weight:700;position:sticky;top:0;z-index:5}
-        table.audit-log tr:nth-child(even){background-color:#f9f9f9}
-        table.audit-log td.excerpt{max-width:250px;white-space:pre-wrap;word-break:break-word;font-family:monospace;font-size:.85em}
-        table.audit-log td.error{color:#d8000c;font-style:italic;font-size:.85em}
-        .audit-log-wrapper{max-height:45vh;overflow-y:auto;border:1px solid #ccc;margin-top:10px}
-        .audit-error-message{color:#d8000c;background-color:#ffd2d2;border:1px solid #d8000c;padding:10px 15px;margin-top:10px;border-radius:4px;font-size:.9em}
-
-        /* --- Styles for Audit Log Visibility Toggle --- */
-        #audit-log-section {
-            display: none; /* Hidden by default */
+        /* --- Dropdown Specific Styles --- */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            margin-left: 15px;
         }
-        #audit-log-section.visible {
-            display: block; /* Show when class is added */
+        .dropdown-trigger::after { /* Keep arrow */
+            content: ' ▼'; font-size: 0.8em; margin-left: 4px;
         }
-        /* --- End Audit Log Styles --- */
+        .dropdown-content {
+            /* display: none; REMOVE THIS - JS will handle visibility */
+            visibility: hidden; /* Hide using visibility initially */
+            opacity: 0; /* Make invisible */
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 10;
+            border-radius: 4px;
+            padding: 5px 0;
+            right: 0;
+            margin-top: 5px;
+            transition: opacity 0.2s ease-in-out, visibility 0s linear 0.2s; /* Smooth fade */
+        }
+        /* Style for when dropdown IS visible */
+        .dropdown-content.visible {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.2s ease-in-out, visibility 0s linear 0s;
+        }
+        .dropdown-content a {
+            color: #202124; padding: 10px 16px; text-decoration: none; display: block; font-size: 13px; text-align: left; white-space: nowrap; cursor: pointer;
+        }
+        .dropdown-content a:hover { background-color: #f1f3f4; text-decoration: none; }
+        /* REMOVE the hover rule for showing content */
+        /* .dropdown:hover .dropdown-content { display: block; } */
+        /* --- End Dropdown Styles --- */
 
+        /* ... (rest of CSS remains the same) ... */
+        main{flex-grow:1;display:flex;flex-direction:column;align-items:center;padding:20px;padding-top:5vh}.logo h1{font-size:60px;font-weight:400;color:#4285f4;margin:0 0 25px;letter-spacing:-1px;text-align:center}.form-container{max-width:650px;width:95%;text-align:left;background-color:#fff;padding:25px;border:1px solid #dfe1e5;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:30px}.input-area{width:100%;margin-bottom:15px;display:flex;align-items:flex-start;border:1px solid #dfe1e5;border-radius:8px;padding:10px 15px;box-shadow:none;transition:box-shadow .3s ease,border-color .3s ease;background-color:#fff}.input-area:focus-within,.input-area:hover{border-color:#aaa;box-shadow:0 1px 6px rgba(32,33,36,.1)}.input-area .input-icon{color:#9aa0a6;margin-right:10px;font-size:18px;padding-top:8px}.input-area textarea{flex-grow:1;border:none;outline:none;padding:8px 0;font-size:16px;background-color:transparent;width:100%;resize:vertical;min-height:80px;line-height:1.5;font-family:inherit}.text-input-label{display:block;margin-bottom:8px;font-size:.95em;font-weight:700;color:#3c4043}.file-input-label{display:block;margin:15px 0 8px;font-size:.95em;font-weight:700;color:#3c4043}input[type=file]{display:block;margin-bottom:20px;color:#3c4043;font-size:.9em;border:1px solid #dfe1e5;padding:8px 12px;border-radius:4px;cursor:pointer}.buttons{display:flex;justify-content:center;margin-bottom:10px;margin-top:25px}.buttons button,.clear-button{background-color:#1a73e8;border:1px solid #1a73e8;border-radius:4px;color:#fff;font-size:14px;font-weight:700;padding:10px 24px;margin:0 8px;cursor:pointer;transition:background-color .2s ease,box-shadow .2s ease}.buttons button:focus,.clear-button:focus{outline:2px solid #a4c2f4;outline-offset:2px}.buttons button:hover,.clear-button:hover{background-color:#185abc;box-shadow:0 1px 2px rgba(0,0,0,.1);text-decoration:none}.clear-button{background-color:#f8f9fa;border:1px solid #dadce0;color:#3c4043;text-decoration:none;display:inline-flex;align-items:center}.clear-button:hover{background-color:#f1f3f4;border-color:#c6c6c6;box-shadow:0 1px 1px rgba(0,0,0,.1)}.llm-response-container,.redacted-text-container,.results-container,.audit-log-container{max-width:800px;width:95%;margin-top:30px;padding:25px;background-color:#fff;border:1px solid #dfe1e5;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);text-align:left}.llm-response-container h2,.redacted-text-container h2,.results-container h2,.audit-log-container h2{color:#1a73e8;border-bottom:2px solid #e8f0fe;padding-bottom:10px;margin-top:0;margin-bottom:20px;font-size:1.4em}.results-container h3{color:#202124;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:25px;margin-bottom:15px;font-size:1.1em}.results-summary{padding:15px;border-radius:4px;margin-bottom:25px;font-weight:500;display:flex;align-items:center}.results-summary::before{font-size:1.2em;margin-right:10px}.issues-found{background-color:#fef7e0;border:1px solid #fce8b2;color:#754c00}.issues-found::before{content:"⚠️"}.no-issues-found{background-color:#e6f4ea;border:1px solid #c6e1cf;color:#137333}.no-issues-found::before{content:"✅"}.findings-list{list-style:none;padding:0}.findings-list li{border:1px solid #e0e0e0;border-left:4px solid #fbbc04;border-radius:4px;padding:12px 15px;margin-bottom:12px;background-color:#fff;transition:box-shadow .2s ease}.findings-list li:hover{box-shadow:0 2px 5px rgba(0,0,0,.1)}.finding-details{margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}.finding-category{font-weight:700;color:#333;margin-right:10px;font-size:1.05em}.finding-type{font-style:italic;color:#5f6368;background-color:#f1f3f4;padding:2px 6px;border-radius:10px;font-size:.85em}.finding-value{display:block;font-family:"Courier New",Courier,monospace;background-color:#f1f3f4;padding:6px 10px;border-radius:4px;margin:8px 0;word-break:break-all;border:1px dashed #ccc;color:#d93025}.finding-description{font-size:.9em;color:#5f6368;margin-top:5px}.analysis-source{font-style:italic;color:#5f6368;margin-bottom:20px;padding-bottom:15px;border-bottom:1px dashed #ccc;font-size:.9em}.disclaimer{font-size:.85em;color:#70757a;margin-top:25px;border-top:1px dashed #ccc;padding-top:15px;line-height:1.4}.llm-response-container p,.redacted-text-container p{font-size:.95em;color:#3c4043;line-height:1.6;margin-bottom:15px}.llm-response-content,.redacted-text-content{font-family:"Courier New",Courier,monospace;background-color:#f8f9fa;padding:15px;border-radius:4px;border:1px solid #e0e0e0;white-space:pre-wrap;word-wrap:break-word;max-height:400px;overflow-y:auto;font-size:.9em;color:#202124}.llm-response-content{font-family:Arial,sans-serif;background-color:#e8f0fe;border-color:#c7d9f7}footer{background:#f2f2f2;padding:15px 30px;font-size:13px;color:#70757a;border-top:1px solid #e4e4e4;display:flex;justify-content:space-between;flex-wrap:wrap;margin-top:auto}@media (max-width:600px){footer{justify-content:center}.footer-links-left,.footer-links-right{text-align:center;width:100%;margin-bottom:10px}}footer a{color:#70757a;padding:0 10px;text-decoration:none}footer a:hover{text-decoration:underline}.error-message{max-width:650px;width:95%;color:#d8000c;background-color:#ffd2d2;border:1px solid #d8000c;padding:12px 18px;margin:0 auto 20px;border-radius:4px;font-size:.9em;text-align:center}
+        /* Audit log styles for separate pages */
+        table.audit-log { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #fff; }
+        table.audit-log th, table.audit-log td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; vertical-align: top; }
+        table.audit-log th { background-color: #f2f2f2; font-weight: bold; position: sticky; top: 0; z-index: 5; }
+        table.audit-log tr:nth-child(even) { background-color: #f9f9f9; }
+        table.audit-log td.excerpt { max-width: 250px; white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 0.85em; }
+        table.audit-log td.error { color: #D8000C; font-style: italic; font-size: 0.85em;}
+        .audit-log-wrapper { max-height: 70vh; overflow-y: auto; border: 1px solid #ccc; margin-top: 10px; }
+        .audit-error-message { color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C; padding: 10px 15px; margin-top: 10px; border-radius: 4px; font-size: 0.9em;}
     </style>
 </head>
 <body>
@@ -112,7 +79,8 @@
         <!-- Model Selection Dropdown -->
         <div class="dropdown">
             <button class="dropdown-trigger" id="model-selector-button">Select Model</button>
-            <div class="dropdown-content">
+            <!-- Add ID to content -->
+            <div class="dropdown-content" id="model-dropdown-content">
                 <a href="#" class="model-option">ChatGPT</a>
                 <a href="#" class="model-option">DeepSeek</a>
                 <a href="#" class="model-option">MetaAI (Llama)</a>
@@ -121,13 +89,21 @@
             </div>
         </div>
 
-        <!-- NEW Audit Log Toggle Button -->
-        <button class="header-button" id="audit-toggle-button">Show Audit Log</button>
+        <!-- Admin Tasks Dropdown -->
+        <div class="dropdown">
+            <!-- Add ID to trigger -->
+            <button class="dropdown-trigger" id="admin-tasks-button">Admin Tasks</button>
+            <!-- Add ID to content -->
+            <div class="dropdown-content" id="admin-tasks-content">
+                <a href="{{ url_for('user_activity_report') }}">Activity Report</a>
+                <a href="{{ url_for('findings_graph') }}">Findings Graph</a>
+                <!-- <a href="#">Suspend User (Not Implemented)</a> -->
+            </div>
+        </div>
 
-        <!-- Other Header Links -->
         <a href="#">About</a>
         <a href="#">Features</a>
-        <a href="#" class="signin-button">Sign In</a>
+        <a href="#" class="signin-button">Sign In</a> {# Or conditional login/logout #}
     </header>
 
     <main>
@@ -220,49 +196,7 @@
         </div>
         {% endif %}
 
-        <!-- Audit Log Display Section (Initially Hidden) -->
-        <div class="audit-log-container" id="audit-log-section"> {# <-- Added ID here #}
-            <h2>Audit Log (Recent Entries)</h2>
-            {% if audit_log_error %}
-                <p class="audit-error-message">Error reading audit log: {{ audit_log_error }}</p>
-            {% elif audit_log_entries %}
-                <div class="audit-log-wrapper"> {# Wrapper for scrolling #}
-                    <table class="audit-log">
-                        <thead>
-                            <tr>
-                                <th>Timestamp</th>
-                                <th>User</th>
-                                <th>Model</th>
-                                <th>Findings</th>
-                                <th>Original Excerpt</th>
-                                <th>Redacted Excerpt</th>
-                                <th>Error</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for entry in audit_log_entries %}
-                            <tr>
-                                <td>{{ entry.timestamp }}</td>
-                                <td>{{ entry.user }}</td>
-                                <td>{{ entry.model }}</td>
-                                <td>{{ entry.findings }}</td>
-                                <td class="excerpt">{{ entry.original_excerpt }}</td>
-                                <td class="excerpt">{{ entry.redacted_excerpt }}</td>
-                                <td class="error">{{ entry.error_msg }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="7" style="text-align:center;">Audit log appears to be empty.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p>Audit log file not found or is empty.</p>
-            {% endif %}
-        </div>
-        <!-- END: Audit Log Display Section -->
+        <!-- Audit Log Display Section REMOVED from here -->
 
     </main>
 
@@ -271,61 +205,88 @@
         <div class="footer-links-right"> <a href="#">Security Center</a> <a href="#">Contact</a> <a href="#">Help</a> </div>
     </footer>
 
-     <!-- JavaScript for Dropdown & Audit Toggle -->
+     <!-- JavaScript for Dropdown Interaction -->
      <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Model Dropdown Logic ---
-            const modelButton = document.getElementById('model-selector-button');
-            const modelOptions = document.querySelectorAll('.dropdown-content .model-option');
-            console.log("DOM loaded, script running.");
-            console.log("Model Button Element:", modelButton);
-            console.log("Model Option Elements Found:", modelOptions.length);
+            console.log("DOM loaded, dropdown script running.");
+
+            // --- Function to handle dropdown toggling ---
+            function setupDropdown(buttonId, contentId) {
+                const triggerButton = document.getElementById(buttonId);
+                const contentElement = document.getElementById(contentId);
+
+                console.log(`Setting up dropdown: Button ID=${buttonId}, Content ID=${contentId}`);
+                console.log("Trigger Button Element:", triggerButton);
+                console.log("Content Element:", contentElement);
+
+
+                if (triggerButton && contentElement) {
+                    triggerButton.addEventListener('click', function(event) {
+                        event.stopPropagation(); // Prevent click from immediately closing dropdown via body listener
+                        // Toggle the current dropdown
+                        const isVisible = contentElement.classList.contains('visible');
+                        // Hide any other potentially open dropdowns first
+                        hideAllDropdowns();
+                        // Then toggle the current one
+                        if (!isVisible) {
+                            contentElement.classList.add('visible');
+                            console.log(`Dropdown ${contentId} shown`);
+                        } else {
+                             console.log(`Dropdown ${contentId} hidden`); // Already hidden by hideAllDropdowns
+                        }
+                    });
+                } else {
+                     if (!triggerButton) console.error(`Error: Could not find dropdown trigger with ID '${buttonId}'`);
+                     if (!contentElement) console.error(`Error: Could not find dropdown content with ID '${contentId}'`);
+                }
+            }
+
+            // --- Function to hide all dropdowns ---
+            function hideAllDropdowns() {
+                document.querySelectorAll('.dropdown-content.visible').forEach(function(content) {
+                    content.classList.remove('visible');
+                    console.log(`Hiding dropdown ${content.id}`);
+                });
+            }
+
+            // --- Setup the dropdowns ---
+            setupDropdown('model-selector-button', 'model-dropdown-content');
+            setupDropdown('admin-tasks-button', 'admin-tasks-content');
+
+            // --- Specific logic for Model Selector Options ---
+            const modelOptions = document.querySelectorAll('#model-dropdown-content .model-option');
+            const modelButton = document.getElementById('model-selector-button'); // Get button again for update
 
             if (modelButton && modelOptions.length > 0) {
-                modelOptions.forEach(function(option, index) {
-                    // console.log(`Attaching listener to option ${index}:`, option.textContent); // Less verbose logging
+                modelOptions.forEach(function(option) {
                     option.addEventListener('click', function(event) {
-                        event.preventDefault();
-                        // console.log("Click detected on:", event.target.textContent); // Less verbose logging
+                        event.preventDefault(); // Prevent link navigation
+                        event.stopPropagation(); // Prevent closing dropdown immediately
                         const selectedModelName = event.target.textContent;
-                        modelButton.textContent = selectedModelName; // Update button text only
-                        // console.log("Button text updated to:", modelButton.textContent); // Less verbose logging
+                        modelButton.textContent = selectedModelName; // Update button text
+                        hideAllDropdowns(); // Hide dropdown after selection
+                        console.log("Model selected:", selectedModelName);
                     });
                 });
-                console.log("Model selector listeners attached.");
-            } else {
-                 if (!modelButton) console.error("Error: Could not find model selector button with ID 'model-selector-button'");
-                 if (modelOptions.length === 0) console.warn("Warning: No elements found with class 'model-option' inside '.dropdown-content'");
+                console.log("Model option listeners attached.");
             }
 
-            // --- Audit Log Toggle Logic ---
-            const auditToggleButton = document.getElementById('audit-toggle-button');
-            const auditLogSection = document.getElementById('audit-log-section');
-            console.log("Audit Toggle Button:", auditToggleButton);
-            console.log("Audit Log Section:", auditLogSection);
-
-
-            if (auditToggleButton && auditLogSection) {
-                auditToggleButton.addEventListener('click', function() {
-                    console.log("Audit Toggle Button clicked");
-                    // Check if the section is currently visible by checking for the 'visible' class
-                    const isVisible = auditLogSection.classList.contains('visible');
-
-                    if (isVisible) {
-                        auditLogSection.classList.remove('visible');
-                        auditToggleButton.textContent = 'Show Audit Log'; // Change button text
-                        console.log("Audit log hidden");
-                    } else {
-                        auditLogSection.classList.add('visible');
-                        auditToggleButton.textContent = 'Hide Audit Log'; // Change button text
-                        console.log("Audit log shown");
+            // --- Add listener to close dropdowns if clicking outside ---
+            document.addEventListener('click', function(event) {
+                // Check if the click was outside of any .dropdown container
+                let clickedInside = false;
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    if (dropdown.contains(event.target)) {
+                        clickedInside = true;
                     }
                 });
-                console.log("Audit toggle listener attached.");
-            } else {
-                 if (!auditToggleButton) console.error("Error: Could not find audit toggle button with ID 'audit-toggle-button'");
-                 if (!auditLogSection) console.error("Error: Could not find audit log section with ID 'audit-log-section'");
-            }
+
+                if (!clickedInside) {
+                    hideAllDropdowns();
+                }
+            });
+
+            console.log("Dropdown setup complete.");
         });
     </script>
 

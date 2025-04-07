@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Findings Graph - GenAI Shield</title>
+    <!-- Include Plotly.js -->
+    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+     <!-- Basic Styling -->
+    <style>
+        body{font-family:Arial,sans-serif;padding:0;margin:0;display:flex;flex-direction:column;min-height:100vh;color:#202124;background-color:#f8f9fa}
+        header{display:flex;justify-content:flex-end;align-items:center;padding:15px 30px;font-size:13px;background-color:#fff;border-bottom:1px solid #e4e4e4}
+        header a{margin-left:15px;color:#5f6368;text-decoration:none}
+        main{flex-grow:1;padding:20px 40px;}
+        footer{background:#f2f2f2;padding:15px 30px;font-size:13px;color:#70757a;border-top:1px solid #e4e4e4;display:flex;justify-content:space-between;flex-wrap:wrap;margin-top:auto}
+        h1 { color: #1a73e8; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1a73e8; text-decoration: none; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+        .audit-error-message { color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C; padding: 10px 15px; margin-top: 10px; border-radius: 4px; font-size: 0.9em;}
+        .chart { width: 90%; height: 400px; margin: 20px auto; } /* Center chart */
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('home') }}">Home</a>
+        <span style="margin-left:auto; color:#5f6368;">Admin View</span>
+    </header>
+    <main>
+        <h1>Findings Graph (Approximate Estimate)</h1>
+        <a href="{{ url_for('home') }}" class="back-link">← Back to Analyzer</a>
+
+        {% if error %}
+             <p class="audit-error-message">Error generating graph: {{ error }}</p>
+        {% elif graphJSON %}
+            <div id='chart' class='chart'></div>
+            <script type='text/javascript'>
+                try {
+                    var graphs = {{ graphJSON | safe }};
+                    Plotly.newPlot('chart', graphs.data, graphs.layout || {}); // Use newPlot for robustness
+                } catch (e) {
+                    console.error("Plotly rendering error:", e);
+                    document.getElementById('chart').textContent = "Error rendering graph.";
+                }
+            </script>
+             <p style="text-align: center; font-style: italic; color: #555; margin-top: 15px;">
+                 Note: This graph is an approximation based on total findings per request in the log file.
+                 It does not reflect the exact types of findings without more detailed logging.
+             </p>
+        {% else %}
+            <p>Could not generate graph data. Ensure Plotly is installed and the audit log exists.</p>
+        {% endif %}
+    </main>
+     <footer>
+         <div style="text-align: center; width: 100%;">GenAI Shield Admin</div>
+    </footer>
+</body>
+</html>
