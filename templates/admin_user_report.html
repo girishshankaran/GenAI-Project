@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Activity Report - GenAI Shield</title>
+    <!-- Link to the same CSS or copy relevant styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> {# Assumes you move CSS to static/style.css #}
+    <!-- Or copy styles directly -->
+    <style>
+        /* Copy relevant styles from index.html (body, header, footer, tables, etc.) */
+        body{font-family:Arial,sans-serif;padding:0;margin:0;display:flex;flex-direction:column;min-height:100vh;color:#202124;background-color:#f8f9fa}
+        header{display:flex;justify-content:flex-end;align-items:center;padding:15px 30px;font-size:13px;background-color:#fff;border-bottom:1px solid #e4e4e4}
+        header a{margin-left:15px;color:#5f6368;text-decoration:none}
+        main{flex-grow:1;padding:20px 40px;}
+        footer{background:#f2f2f2;padding:15px 30px;font-size:13px;color:#70757a;border-top:1px solid #e4e4e4;display:flex;justify-content:space-between;flex-wrap:wrap;margin-top:auto}
+        h1 { color: #1a73e8; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1a73e8; text-decoration: none; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+        .report-summary { margin-bottom: 20px; padding: 15px; background-color: #e8f0fe; border: 1px solid #c7d9f7; border-radius: 5px;}
+        .report-summary p { margin: 5px 0; }
+        /* Styles for the Audit Log Table */
+        table.audit-log { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #fff; }
+        table.audit-log th, table.audit-log td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; vertical-align: top; }
+        table.audit-log th { background-color: #f2f2f2; font-weight: bold; position: sticky; top: 0; z-index: 5; }
+        table.audit-log tr:nth-child(even) { background-color: #f9f9f9; }
+        table.audit-log td.excerpt { max-width: 250px; white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 0.85em; }
+        table.audit-log td.error { color: #D8000C; font-style: italic; font-size: 0.85em;}
+        .audit-log-wrapper { max-height: 60vh; overflow-y: auto; border: 1px solid #ccc; margin-top: 10px; }
+        .audit-error-message { color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C; padding: 10px 15px; margin-top: 10px; border-radius: 4px; font-size: 0.9em;}
+    </style>
+</head>
+<body>
+    <header>
+        <!-- Simple header for admin pages -->
+        <a href="{{ url_for('home') }}">Home</a>
+        <span style="margin-left:auto; color:#5f6368;">Admin View</span> {# Indicate admin context #}
+    </header>
+
+    <main>
+        <h1>User Activity Report (File Log Based)</h1>
+        <a href="{{ url_for('home') }}" class="back-link">← Back to Analyzer</a>
+
+        {% if error %}
+            <p class="audit-error-message">Error reading audit log: {{ error }}</p>
+        {% elif report_data %}
+            <div class="report-summary">
+                <p><strong>Total Requests Logged:</strong> {{ report_data.total_requests }}</p>
+                <p><strong>Total Findings Logged (All Users):</strong> {{ report_data.total_findings }}</p>
+                <p><strong>Model Usage (Approx):</strong></p>
+                <ul>
+                    {% for model, count in report_data.model_usage.items() %}
+                        <li>{{ model }}: {{ count }}</li>
+                    {% else %}
+                        <li>No model usage data found.</li>
+                    {% endfor %}
+                </ul>
+                 <p><small><i>Note: User distinction not available without login system.</i></small></p>
+            </div>
+
+            <h2>Recent Raw Log Entries (Max 100)</h2>
+            {% if report_data.log_entries %}
+                <div class="audit-log-wrapper">
+                    <table class="audit-log">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Model</th>
+                                <th>Findings</th>
+                                <th>Original Excerpt</th>
+                                <th>Redacted Excerpt</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in report_data.log_entries %}
+                            <tr>
+                                <td>{{ entry.timestamp }}</td>
+                                <td>{{ entry.user }}</td>
+                                <td>{{ entry.model }}</td>
+                                <td>{{ entry.findings }}</td>
+                                <td class="excerpt">{{ entry.original_excerpt }}</td>
+                                <td class="excerpt">{{ entry.redacted_excerpt }}</td>
+                                <td class="error">{{ entry.error_msg }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                 <p>No recent log entries found.</p>
+            {% endif %}
+
+        {% else %}
+            <p>Could not generate report data.</p>
+        {% endif %}
+    </main>
+
+    <footer>
+        <!-- Simple footer -->
+         <div style="text-align: center; width: 100%;">GenAI Shield Admin</div>
+    </footer>
+</body>
+</html>
