@@ -5,7 +5,7 @@ import os
 import requests
 import logging
 from datetime import datetime
-from flask import Flask, render_template, request, url_for # Keep url_for if used elsewhere, maybe not needed now
+from flask import Flask, render_template, request, url_for
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
@@ -68,35 +68,18 @@ def extract_text_from_txt(file_stream):
     try: file_stream.seek(0); return file_stream.read().decode('utf-8', errors='ignore')
     except Exception as e: print(f"Error reading TXT file: {e}"); return None
 
-# *** CORRECTED extract_text_from_pdf FUNCTION ***
 def extract_text_from_pdf(file_stream):
-    """Extracts text from a PDF file stream using PyPDF2."""
-    if not PyPDF2:
-        print("PyPDF2 library not installed. Cannot process PDF.")
-        return None
-    text = ""
+    if not PyPDF2: return None
+    text = "";
     try:
-        file_stream.seek(0)
-        reader = PyPDF2.PdfReader(file_stream)
-        if reader.is_encrypted:
-            print("PDF is encrypted, cannot extract text.") # More informative print
-            return "[ERROR: PDF is encrypted]" # Return the error marker
-
-        # This loop should only run if the PDF is *not* encrypted
+        file_stream.seek(0); reader = PyPDF2.PdfReader(file_stream)
+        if reader.is_encrypted: return "[ERROR: PDF is encrypted]"
         for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n" # Correct indentation
-
-        return text if text else None # Return None if no text extracted
-
-    except PyPDF2.errors.PdfReadError as e:
-        print(f"Error reading PDF file (PdfReadError): {e}.")
-        return None
-    except Exception as e:
-        print(f"Error reading PDF file: {e}")
-        return None
-# *** END CORRECTION ***
+            page_text = page.extract_text();
+            if page_text: text += page_text + "\n"
+        return text if text else None
+    except PyPDF2.errors.PdfReadError as e: print(f"Error reading PDF file (PdfReadError): {e}."); return None
+    except Exception as e: print(f"Error reading PDF file: {e}"); return None
 
 def extract_text_from_docx(file_stream):
     if not docx: return None
@@ -173,7 +156,7 @@ PLACEHOLDER_MAP = { # Full map here
     "Project Codename": "[PROJECT_CODENAME]", "Potential Generic Key/Token": "[GENERIC_KEY]",
     "JSON Key Pair": "[JSON_SECRET_PAIR]", "Value in Parentheses": "[SECRET_IN_PARENS]",
     "Value near Keyword": "[POTENTIAL_VALUE]", "PERSON": "[PERSON_NAME]", "GPE": "[LOCATION]",
-    "LOC": "[LOCATION]", "ORG": "[ORGANIZATION]", "DATE": "[DATE_ENTITY]", "CARDINAL": "[NUMBER]",
+    "LOC": "[LOCATION]", "ORG": "[ORGANIZATION]", "DATE": "[DATE_ENTITY]", #"CARDINAL": "[NUMBER]", # Excluded CARDINAL
     "MONEY": "[MONETARY_VALUE]", "NORP": "[GROUP]", "FAC": "[FACILITY]", "SSN Keyword": "[SSN_MENTIONED]",
     "DOB Keyword": "[DOB_MENTIONED]", "Credentials": "[CREDENTIALS_INFO]", "Personal Data (PII)": "[PII_INFO]",
     "Potential PII/Contextual": "[CONTEXTUAL_INFO]", "Confidential/Secret": "[CONFIDENTIAL_INFO]",
@@ -213,6 +196,7 @@ def perform_confidentiality_check(text):
         if any(i in processed_text_positions for i in range(start_index, end_index)): print(f"DEBUG SKIP - Overlap detected for {type} at {span}"); return
         print(f"DEBUG ADD - Adding Finding: {type} | Cat: {category} | Val: '{value}' | Span: {span}"); findings.append({"category": category, "type": type, "value": value, "description": description, "span": span})
         for i in range(start_index, end_index): processed_text_positions.add(i)
+
     # 1. spaCy NER Processing
     spacy_findings_temp = []
     if nlp:
@@ -220,21 +204,30 @@ def perform_confidentiality_check(text):
             doc = nlp(original_text)
             for ent in doc.ents:
                 label = ent.label_; category = "Unknown"; finding_type = label; entity_text = ent.text; entity_text_lower = entity_text.lower()
+                # --- Rule-based Override ---
                 if label in ["ORG", "MISC", "PRODUCT"] :
                     if entity_text_lower == "ssn": label = "SSN_KW_OVERRIDE"; category = "Personal Data (PII)"; finding_type = "SSN Keyword"
                     elif entity_text_lower == "dob": label = "DOB_KW_OVERRIDE"; category = "Personal Data (PII)"; finding_type = "DOB Keyword"
+                # --- Skip CARDINAL entities ---
+                if label == "CARDINAL":
+                    print(f"DEBUG: Skipping spaCy CARDINAL entity: '{entity_text}'")
+                    continue # Don't process this entity further
+                # --- Map remaining labels ---
                 if label == "PERSON": category = "Personal Data (PII)"; finding_type = "PERSON"
                 elif label in ["GPE", "LOC"]: category = "Contextual"; finding_type = "LOCATION"
                 elif label == "ORG": category = "Contextual"; finding_type = "ORGANIZATION"
                 elif label == "DATE": category = "Contextual"; finding_type = "DATE_ENTITY"
-                elif label in ["CARDINAL", "MONEY", "QUANTITY"]: category = "Potential PII/Contextual"; finding_type = label
+                # Note: Removed CARDINAL, kept MONEY/QUANTITY as potential context
+                elif label in ["MONEY", "QUANTITY"]: category = "Potential PII/Contextual"; finding_type = label
                 elif label in ["NORP", "FAC", "PRODUCT", "EVENT", "WORK_OF_ART", "LAW", "LANGUAGE"]: category = "Contextual"; finding_type = label
+                # Add if category was determined
                 if category != "Unknown": spacy_findings_temp.append({"category": category, "type": finding_type, "value": entity_text, "description": f"Detected '{label}' entity (via spaCy NER).", "span": (ent.start_char, ent.end_char)})
         except Exception as e: print(f"Error during spaCy processing: {e}")
     else: print("spaCy NER skipped as model is not loaded.")
     print(f"DEBUG: spaCy Findings Temp = {spacy_findings_temp}")
+
     # 2. Keyword Scanning
-    keyword_categories = {
+    keyword_categories = { # Full lists
         "Legal": [r"attorney-client\s+privilege", r"legal\s+hold", r"litigation", r"confidential\s+settlement", r"under\s+seal", r"privileged\s+and\s+confidential", r"cease\s+and\s+desist", r"nda", r"non-disclosure\s+agreement"],
         "Confidential/Secret": [r"confidential", r"proprietary", r"secrets?", r"internal\s+use\s+only", r"trade\s+secret", r"classified", r"sensitive", r"do\s+not\s+distribute", r"private", r"restricted", r"not\s+for\s+public\s+release", r"passwords?", r"secret keys?", r"api keys?", r"credentials?", r"tokens?"],
         "Intellectual Property": [r"patent\s+pending", r"patent\s+application", r"trademark", r"copyright", r"invention\s+disclosure", r"prototype", r"roadmap", r"research\s+findings", r"algorithm", r"proprietary\s+algorithm"],
@@ -252,6 +245,7 @@ def perform_confidentiality_check(text):
                              for i in range(start, end): keyword_processed_positions_check.add(i)
                 except re.error as e: print(f"Warning: Skipping invalid regex keyword: '{keyword_pattern}' - {e}")
     print(f"DEBUG: Keyword Findings Temp = {temp_keyword_findings}")
+
     # 3. Keyword Proximity Scan
     KEYWORDS_INDICATING_VALUE = {'password', 'pass', 'pwd', 'secret', 'key', 'token', 'credential', 'credentials', 'username', 'user', 'login', 'userid', 'user_id', 'account', 'acct', 'accounts', 'ssn', 'social security number', 'credit card', 'bank account', 'email', 'phone'}
     POTENTIAL_VALUE_REGEX = r'\b([a-zA-Z0-9\-_+=/.@]{5,})\b'; PROXIMITY_WINDOW = 50
@@ -269,8 +263,9 @@ def perform_confidentiality_check(text):
                             for i in range(val_start_abs, val_end_abs): proximity_checked_indices.add(i)
              except re.error as e: print(f"Warning: Error during proximity value search: {e}")
     print(f"DEBUG: Proximity Value Findings Temp = {potential_value_findings}")
+
     # 4. Regex Pattern Matching
-    regex_patterns = [
+    regex_patterns = [ # Full list
         (r'\b(password|passwd|secret|pwd|pass)\b(?:\s+(?:is|was|are|be)\s+|\s*[:=]\s*|\s+)(\S+)', "Password Assignment", "Credentials", "Potential password assignment.", re.IGNORECASE),
         (r'\b(api[\._]?key|access[\._]?key|secret[\._]?key|token|credential|auth_token)\b\s*[:=]\s*(?:\{|"|\'|)([^\s;\'"\}]+)(?:\}|"|\'|;)', "Credential Assignment", "Credentials", "Potential hardcoded key/token assignment in code.", re.IGNORECASE),
         (r'\b(user(?: |_)name|user|login|user_?id)\s*[:=]\s*\S+', "Username Assignment", "Credentials", "Potential username or login ID assignment.", re.IGNORECASE),
@@ -303,6 +298,7 @@ def perform_confidentiality_check(text):
             except re.error as e: print(f"Warning: Skipping invalid regex pattern: {pattern} - {e}")
             except IndexError as e: print(f"Warning: Index error during regex: {pattern} - {e}")
     print(f"DEBUG: Regex Findings Temp = {regex_findings_temp}")
+
     # 5. Add Findings in Priority Order
     print("\nDEBUG: Adding findings with overlap checks...")
     for finding in regex_findings_temp: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
@@ -310,9 +306,10 @@ def perform_confidentiality_check(text):
     for finding in potential_value_findings: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     for finding in spacy_findings_temp: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     print("DEBUG: Finished adding findings.\n")
-    # --- End Finding Addition ---
+
     sorted_findings = sorted(findings, key=lambda f: (f['span'][0], -f['span'][1])); print(f"DEBUG: Final Findings List (Sorted) = {sorted_findings}")
     return {"found_issues": len(sorted_findings) > 0, "findings": sorted_findings}
+
 
 # --- Helper function to read and parse audit log ---
 def read_parse_audit_log():
@@ -324,7 +321,7 @@ def read_parse_audit_log():
                 lines = f.readlines(); lines.reverse() # Show newest first
                 for line_num, line in enumerate(lines, 1):
                     parts = line.strip().split(' | ')
-                    if len(parts) == 7:
+                    if len(parts) == 7: # Timestamp + 6 logged fields
                         entry = {}
                         try:
                             entry['timestamp'] = parts[0].strip()
@@ -346,9 +343,10 @@ def read_parse_audit_log():
 @app.route('/', methods=['GET', 'POST'])
 def home():
     results = None; original_text_display = ""; uploaded_filename = None; error = None; llm_response = None; text_sent_to_llm = None; source_description = "No input processed yet."; placeholders_used = None; user_identifier = "anonymous"
-    audit_log_entries = []; audit_log_error = None
+    audit_log_entries = []; audit_log_error = None # Init audit log vars
     if request.method == 'POST':
         text_input_from_area = request.form.get('text_to_analyze', ''); file = request.files.get('file_to_analyze'); content_to_analyze = None
+        # File/Text processing logic...
         if file and file.filename:
             if allowed_file(file.filename):
                 uploaded_filename = secure_filename(file.filename); print(f"Processing uploaded file: {uploaded_filename}"); source_description = f"Uploaded file '{uploaded_filename}'"; file_ext = uploaded_filename.rsplit('.', 1)[1].lower()
@@ -356,6 +354,7 @@ def home():
                     if file_ext == 'txt': content_to_analyze = extract_text_from_txt(file.stream)
                     elif file_ext == 'pdf': content_to_analyze = extract_text_from_pdf(file.stream)
                     elif file_ext == 'docx': content_to_analyze = extract_text_from_docx(file.stream)
+                    # Corrected error handling block
                     if content_to_analyze is None or content_to_analyze == "[ERROR: PDF is encrypted]":
                         error_reason = "Check file content/corruption/libraries."
                         if content_to_analyze == "[ERROR: PDF is encrypted]":
