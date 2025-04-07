@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Log - GenAI Shield</title>
+    <style>
+        /* --- Re-use some basic styles from index.html --- */
+        body{font-family:Arial,sans-serif;padding:0;margin:0;display:flex;flex-direction:column;min-height:100vh;color:#202124;background-color:#f8f9fa}
+        header{display:flex;justify-content:flex-end;align-items:center;padding:15px 30px;font-size:13px;background-color:#fff;border-bottom:1px solid #e4e4e4}
+        header a{margin-left:15px;color:#5f6368;text-decoration:none}
+        header a:hover{text-decoration:underline}
+        header .signin-button{background-color:#1a73e8;color:#fff;padding:7px 15px;border-radius:4px;text-decoration:none;font-weight:700;margin-left:15px}
+        header .signin-button:hover{background-color:#185abc;box-shadow:0 1px 2px 0 rgba(66,133,244,.3),0 1px 3px 1px rgba(66,133,244,.15)}
+        main{flex-grow:1;padding:20px 40px; /* More horizontal padding */}
+        footer{background:#f2f2f2;padding:15px 30px;font-size:13px;color:#70757a;border-top:1px solid #e4e4e4;display:flex;justify-content:space-between;flex-wrap:wrap;margin-top:auto}
+        footer a{color:#70757a;padding:0 10px;text-decoration:none}
+        footer a:hover{text-decoration:underline}
+        h1 { color: #1a73e8; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .error-message { color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C; padding: 10px 15px; margin-bottom: 20px; border-radius: 4px; }
+        /* --- Styles for the Audit Log Table --- */
+        table.audit-log {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        table.audit-log th, table.audit-log td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        table.audit-log th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            position: sticky; /* Make header sticky */
+            top: 0; /* Stick to the top */
+            z-index: 5; /* Ensure it's above table content */
+        }
+        table.audit-log tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        table.audit-log tr:hover {
+            background-color: #f1f1f1;
+        }
+        table.audit-log td.excerpt {
+            max-width: 300px; /* Limit width */
+            white-space: pre-wrap; /* Wrap long text */
+            word-break: break-word;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        table.audit-log td.error {
+            color: #D8000C;
+            font-style: italic;
+        }
+        .log-container {
+             max-height: 70vh; /* Limit table height */
+             overflow-y: auto; /* Add scrollbar if needed */
+             border: 1px solid #ccc;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <!-- You might want consistent header elements -->
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="#">About</a>
+        <a href="#">Features</a>
+        <a href="#" class="signin-button">Sign In</a>
+    </header>
+
+    <main>
+        <h1>Audit Log</h1>
+        <a href="{{ url_for('home') }}" class="back-link">← Back to Analyzer</a>
+
+        {% if error %}
+            <p class="error-message">Error reading audit log: {{ error }}</p>
+        {% elif log_entries %}
+            <div class="log-container"> {# Added container for scrolling #}
+            <table class="audit-log">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Model</th>
+                        <th>Findings</th>
+                        <th>Original Excerpt</th>
+                        <th>Redacted Excerpt</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in log_entries %}
+                    <tr>
+                        <td>{{ entry.timestamp }}</td>
+                        <td>{{ entry.user }}</td>
+                        <td>{{ entry.model }}</td>
+                        <td>{{ entry.findings }}</td>
+                        <td class="excerpt">{{ entry.original_excerpt }}</td>
+                        <td class="excerpt">{{ entry.redacted_excerpt }}</td>
+                        <td class="error">{{ entry.error_msg }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align:center;">Audit log is empty or could not be parsed.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        {% else %}
+            <p>Audit log is empty.</p>
+        {% endif %}
+    </main>
+
+    <footer>
+        <div class="footer-links-left"> <a href="#">Privacy</a> <a href="#">Terms</a> <a href="#">Settings</a> </div>
+        <div class="footer-links-right"> <a href="#">Security Center</a> <a href="#">Contact</a> <a href="#">Help</a> </div>
+    </footer>
+
+</body>
+</html>

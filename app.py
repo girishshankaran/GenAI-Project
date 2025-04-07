@@ -5,21 +5,20 @@ import os
 import requests
 import logging
 from datetime import datetime
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for # Keep url_for if used elsewhere, maybe not needed now
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
 # --- spaCy Import and Model Loading ---
 try:
     import spacy
-    # Attempt to load the small English model. Load it once globally.
     try:
         nlp = spacy.load("en_core_web_sm")
         print("spaCy model 'en_core_web_sm' loaded successfully.")
     except OSError:
         print("spaCy model 'en_core_web_sm' not found.")
         print("Please run: python -m spacy download en_core_web_sm")
-        nlp = None # Set nlp to None if model loading fails
+        nlp = None
 except ImportError:
     print("WARNING: spacy library not installed. NER detection will be disabled.")
     print("Install using: pip install spacy")
@@ -48,9 +47,6 @@ app = Flask(__name__)
 # --- Audit Logging Setup ---
 audit_logger = logging.getLogger('audit')
 audit_logger.setLevel(logging.INFO)
-# Use RotatingFileHandler in production for log rotation
-# from logging.handlers import RotatingFileHandler
-# audit_handler = RotatingFileHandler('audit.log', maxBytes=10*1024*1024, backupCount=5)
 audit_handler = logging.FileHandler('audit.log', encoding='utf-8')
 audit_handler.setLevel(logging.INFO)
 audit_formatter = logging.Formatter('%(asctime)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -61,6 +57,7 @@ if not audit_logger.hasHandlers():
 
 # --- Configuration ---
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
+LOG_FILE_PATH = 'audit.log' # Define log path centrally
 
 def allowed_file(filename):
     """Checks if the filename has an allowed extension."""
@@ -71,18 +68,35 @@ def extract_text_from_txt(file_stream):
     try: file_stream.seek(0); return file_stream.read().decode('utf-8', errors='ignore')
     except Exception as e: print(f"Error reading TXT file: {e}"); return None
 
+# *** CORRECTED extract_text_from_pdf FUNCTION ***
 def extract_text_from_pdf(file_stream):
-    if not PyPDF2: return None
-    text = "";
+    """Extracts text from a PDF file stream using PyPDF2."""
+    if not PyPDF2:
+        print("PyPDF2 library not installed. Cannot process PDF.")
+        return None
+    text = ""
     try:
-        file_stream.seek(0); reader = PyPDF2.PdfReader(file_stream)
-        if reader.is_encrypted: return "[ERROR: PDF is encrypted]"
+        file_stream.seek(0)
+        reader = PyPDF2.PdfReader(file_stream)
+        if reader.is_encrypted:
+            print("PDF is encrypted, cannot extract text.") # More informative print
+            return "[ERROR: PDF is encrypted]" # Return the error marker
+
+        # This loop should only run if the PDF is *not* encrypted
         for page in reader.pages:
-            page_text = page.extract_text();
-            if page_text: text += page_text + "\n"
-        return text if text else None
-    except PyPDF2.errors.PdfReadError as e: print(f"Error reading PDF file (PdfReadError): {e}."); return None
-    except Exception as e: print(f"Error reading PDF file: {e}"); return None
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n" # Correct indentation
+
+        return text if text else None # Return None if no text extracted
+
+    except PyPDF2.errors.PdfReadError as e:
+        print(f"Error reading PDF file (PdfReadError): {e}.")
+        return None
+    except Exception as e:
+        print(f"Error reading PDF file: {e}")
+        return None
+# *** END CORRECTION ***
 
 def extract_text_from_docx(file_stream):
     if not docx: return None
@@ -99,83 +113,43 @@ HF_API_KEY = os.environ.get("HF_API_KEY")
 if not HF_API_KEY:
     print("WARNING: HF_API_KEY environment variable not set. LLM functionality will be disabled.")
 
-# Using Mistral model as requested before IndentationError
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3"
+API_URL = "https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english"
 headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
-# --- LLM Query Function (Corrected Indentation) ---
+# --- LLM Query Function ---
 def query_llm(text):
-    if not HF_API_KEY or not API_URL:
-        return "[LLM Query Skipped - API Key or URL not configured]"
-    if not text or not isinstance(text, str) or not text.strip():
-        return "[LLM Query Skipped - Input text is empty or invalid]"
-
-    # Determine prompt and payload based on model type
-    prompt = f"Process the following text and provide a relevant response:\n\n---\n{text}\n---\n\nResponse:"
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 250,
-            "return_full_text": False,
-            "temperature": 0.7,
-            "top_p": 0.9,
-        }
-    }
-    is_classification = False # Mistral is generation
-
+    if not HF_API_KEY or not API_URL: return "[LLM Query Skipped - API Key or URL not configured]"
+    if not text or not isinstance(text, str) or not text.strip(): return "[LLM Query Skipped - Input text is empty or invalid]"
+    if "distilbert" in API_URL or "sentiment" in API_URL: prompt = text; payload = {"inputs": prompt}; is_classification = True
+    else: prompt = f"Process the following text and provide a relevant response:\n\n---\n{text}\n---\n\nResponse:"; payload = {"inputs": prompt, "parameters": {"max_new_tokens": 250, "return_full_text": False, "temperature": 0.7, "top_p": 0.9,}}; is_classification = False
     try:
-        print(f"Sending request to LLM: {API_URL}")
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=90)
-        response.raise_for_status()
-        result = response.json()
-        print(f"LLM Raw Response: {result}")
-        generated_text = None
-
-        # Parsing logic
+        print(f"Sending request to LLM: {API_URL}"); response = requests.post(API_URL, headers=headers, json=payload, timeout=90)
+        response.raise_for_status(); result = response.json(); print(f"LLM Raw Response: {result}"); generated_text = None
         if is_classification:
-            # Parsing for classification would go here if needed
-            pass
-        else: # Parsing for text generation
-            if isinstance(result, list) and result:
-                if isinstance(result[0], dict) and 'generated_text' in result[0]:
-                    generated_text = result[0]['generated_text']
-                elif isinstance(result[0], str):
-                     generated_text = result[0]
-            elif isinstance(result, dict) and 'generated_text' in result:
-                 generated_text = result.get('generated_text')
-
-            # Prompt removal for generation models
-            if generated_text:
-                if generated_text.strip().startswith(prompt.strip()) and not is_classification:
-                     generated_text = generated_text[len(prompt):].strip()
-                elif "Response:" in generated_text:
-                     generated_text = generated_text.split("Response:", 1)[-1].strip()
-
-        # Return logic
-        if generated_text:
-            return generated_text.strip()
+            if isinstance(result, list) and result and isinstance(result[0], list) and result[0]:
+                if isinstance(result[0][0], dict) and 'label' in result[0][0]: top_result = result[0][0]; generated_text = f"Sentiment Analysis: Label='{top_result.get('label')}', Score={top_result.get('score'):.4f}"
+                else: generated_text = f"[LLM Response (Unknown Format): {str(result)[:200]}...]"
+            else: generated_text = f"[LLM Response (Non-List Format): {str(result)[:200]}...]"
         else:
-            # Error handling if parsing failed
+            if isinstance(result, list) and result:
+                if isinstance(result[0], dict) and 'generated_text' in result[0]: generated_text = result[0]['generated_text']
+                elif isinstance(result[0], str): generated_text = result[0]
+            elif isinstance(result, dict) and 'generated_text' in result: generated_text = result.get('generated_text')
+            if generated_text:
+                if generated_text.strip().startswith(prompt.strip()) and not is_classification: generated_text = generated_text[len(prompt):].strip()
+                elif "Response:" in generated_text: generated_text = generated_text.split("Response:", 1)[-1].strip()
+        if generated_text: return generated_text.strip()
+        else:
             print(f"Could not parse expected output from LLM response: {result}")
             if isinstance(result, dict) and 'error' in result:
-                 api_error = result['error']
-                 print(f"Hugging Face API Error Message: {api_error}")
-                 if isinstance(api_error, str) and "currently loading" in api_error.lower():
-                      estimated_time = result.get('estimated_time', 'unknown')
-                      return f"[LLM Info: Model is currently loading, please wait ({estimated_time:.1f}s estimated) and try again.]"
-                 else:
-                     return f"[Error: Received error from API: {api_error}]"
+                 api_error = result['error']; print(f"Hugging Face API Error Message: {api_error}")
+                 if isinstance(api_error, str) and "currently loading" in api_error.lower(): return f"[LLM Info: Model is currently loading, please wait ({result.get('estimated_time', 'unknown'):.1f}s estimated) and try again.]"
+                 else: return f"[Error: Received error from API: {api_error}]"
             return "[Error: LLM response format unexpected or empty]"
-
-    # Exception handling blocks (ensure correct indentation)
-    except requests.exceptions.Timeout:
-        print(f"Error querying LLM: Request timed out.")
-        return "[Error: LLM request timed out]"
+    except requests.exceptions.Timeout: print(f"Error querying LLM: Request timed out."); return "[Error: LLM request timed out]"
     except requests.exceptions.RequestException as e:
-        error_detail = str(e); status_code = "N/A"; resp_text = "N/A"
-        if e.response is not None:
-            status_code = e.response.status_code
-            resp_text = e.response.text[:500]
+        error_detail = str(e); status_code = "N/A"; resp_text = "N/A";
+        if e.response is not None: status_code = e.response.status_code; resp_text = e.response.text[:500]
         print(f"Error querying LLM ({API_URL}): {error_detail} | Status Code: {status_code} | Response: {resp_text}")
         if status_code == 401: return "[Error querying LLM: Authorization failed (401). Check your HF_API_KEY.]"
         elif status_code == 402: return f"[Error querying LLM: Payment Required (402). Access to model {API_URL.split('/')[-1]} requires a paid plan.]"
@@ -184,18 +158,12 @@ def query_llm(text):
         elif status_code == 503: return "[Error querying LLM: Service Unavailable (503). Model might be loading or temporarily down. Try again later.]"
         elif status_code >= 500: return f"[Error querying LLM: Server error ({status_code}). Try again later.]"
         else: return f"[Error querying LLM: {str(e)}]"
-    except (IndexError, KeyError, TypeError) as e:
-        # Ensure 'result' is defined before using in f-string if an early exception occurred
-        err_resp = result if 'result' in locals() else 'Not available'
-        print(f"Error parsing LLM response: {e}. Response was: {err_resp}")
-        return "[Error: Invalid response structure from LLM]"
-    except Exception as e:
-        print(f"An unexpected error occurred during LLM query: {e}")
-        return f"[An unexpected error occurred during LLM query: {str(e)}]"
+    except (IndexError, KeyError, TypeError) as e: print(f"Error parsing LLM response: {e}. Response was: {result if 'result' in locals() else 'Not available'}"); return "[Error: Invalid response structure from LLM]"
+    except Exception as e: print(f"An unexpected error occurred during LLM query: {e}"); return f"[An unexpected error occurred during LLM query: {str(e)}]"
 
 
 # --- Redaction Functions ---
-PLACEHOLDER_MAP = {
+PLACEHOLDER_MAP = { # Full map here
     "Email Address": "[EMAIL]", "Phone Number Format (US)": "[PHONE]", "SSN Format (US)": "[SSN]",
     "Potential SSN (Loose Format)": "[SSN_LIKE]", "Potential Credit Card": "[CREDIT_CARD]",
     "API Key Format": "[API_KEY]", "Private Key Block": "[PRIVATE_KEY]", "Internal/Local IP": "[IP_ADDRESS]",
@@ -212,16 +180,14 @@ PLACEHOLDER_MAP = {
     "Legal": "[LEGAL_INFO]", "Intellectual Property": "[IP_INFO]", "Network": "[NETWORK_INFO]",
     "Identifier": "[IDENTIFIER_INFO]", "Keyword": "[SENSITIVE_KEYWORD]",
 }
-
-def get_placeholder(finding):
+def get_placeholder(finding): # Logic remains same
     ftype = finding.get('type', ''); fcategory = finding.get('category', '')
     if ftype in PLACEHOLDER_MAP: return PLACEHOLDER_MAP[ftype]
     if fcategory in PLACEHOLDER_MAP: return PLACEHOLDER_MAP[fcategory]
     if ftype == 'Keyword': return PLACEHOLDER_MAP.get('Keyword', '[KEYWORD]')
     sanitized_category = re.sub(r'[^\w\s-]', '', fcategory).strip().upper().replace(' ','_')
     return f"[{sanitized_category or 'INFO'}]"
-
-def redact_text(text, findings):
+def redact_text(text, findings): # Logic remains same
     if not findings or not text: return text
     sorted_findings = sorted(findings, key=lambda f: (f['span'][0], -f['span'][1]))
     redacted = ""; last_end = 0; processed_indices = set()
@@ -247,7 +213,6 @@ def perform_confidentiality_check(text):
         if any(i in processed_text_positions for i in range(start_index, end_index)): print(f"DEBUG SKIP - Overlap detected for {type} at {span}"); return
         print(f"DEBUG ADD - Adding Finding: {type} | Cat: {category} | Val: '{value}' | Span: {span}"); findings.append({"category": category, "type": type, "value": value, "description": description, "span": span})
         for i in range(start_index, end_index): processed_text_positions.add(i)
-
     # 1. spaCy NER Processing
     spacy_findings_temp = []
     if nlp:
@@ -268,9 +233,7 @@ def perform_confidentiality_check(text):
         except Exception as e: print(f"Error during spaCy processing: {e}")
     else: print("spaCy NER skipped as model is not loaded.")
     print(f"DEBUG: spaCy Findings Temp = {spacy_findings_temp}")
-
     # 2. Keyword Scanning
-    # *** Full Keyword Lists ***
     keyword_categories = {
         "Legal": [r"attorney-client\s+privilege", r"legal\s+hold", r"litigation", r"confidential\s+settlement", r"under\s+seal", r"privileged\s+and\s+confidential", r"cease\s+and\s+desist", r"nda", r"non-disclosure\s+agreement"],
         "Confidential/Secret": [r"confidential", r"proprietary", r"secrets?", r"internal\s+use\s+only", r"trade\s+secret", r"classified", r"sensitive", r"do\s+not\s+distribute", r"private", r"restricted", r"not\s+for\s+public\s+release", r"passwords?", r"secret keys?", r"api keys?", r"credentials?", r"tokens?"],
@@ -289,7 +252,6 @@ def perform_confidentiality_check(text):
                              for i in range(start, end): keyword_processed_positions_check.add(i)
                 except re.error as e: print(f"Warning: Skipping invalid regex keyword: '{keyword_pattern}' - {e}")
     print(f"DEBUG: Keyword Findings Temp = {temp_keyword_findings}")
-
     # 3. Keyword Proximity Scan
     KEYWORDS_INDICATING_VALUE = {'password', 'pass', 'pwd', 'secret', 'key', 'token', 'credential', 'credentials', 'username', 'user', 'login', 'userid', 'user_id', 'account', 'acct', 'accounts', 'ssn', 'social security number', 'credit card', 'bank account', 'email', 'phone'}
     POTENTIAL_VALUE_REGEX = r'\b([a-zA-Z0-9\-_+=/.@]{5,})\b'; PROXIMITY_WINDOW = 50
@@ -307,7 +269,6 @@ def perform_confidentiality_check(text):
                             for i in range(val_start_abs, val_end_abs): proximity_checked_indices.add(i)
              except re.error as e: print(f"Warning: Error during proximity value search: {e}")
     print(f"DEBUG: Proximity Value Findings Temp = {potential_value_findings}")
-
     # 4. Regex Pattern Matching
     regex_patterns = [
         (r'\b(password|passwd|secret|pwd|pass)\b(?:\s+(?:is|was|are|be)\s+|\s*[:=]\s*|\s+)(\S+)', "Password Assignment", "Credentials", "Potential password assignment.", re.IGNORECASE),
@@ -342,7 +303,6 @@ def perform_confidentiality_check(text):
             except re.error as e: print(f"Warning: Skipping invalid regex pattern: {pattern} - {e}")
             except IndexError as e: print(f"Warning: Index error during regex: {pattern} - {e}")
     print(f"DEBUG: Regex Findings Temp = {regex_findings_temp}")
-
     # 5. Add Findings in Priority Order
     print("\nDEBUG: Adding findings with overlap checks...")
     for finding in regex_findings_temp: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
@@ -350,15 +310,43 @@ def perform_confidentiality_check(text):
     for finding in potential_value_findings: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     for finding in spacy_findings_temp: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     print("DEBUG: Finished adding findings.\n")
-
+    # --- End Finding Addition ---
     sorted_findings = sorted(findings, key=lambda f: (f['span'][0], -f['span'][1])); print(f"DEBUG: Final Findings List (Sorted) = {sorted_findings}")
     return {"found_issues": len(sorted_findings) > 0, "findings": sorted_findings}
 
+# --- Helper function to read and parse audit log ---
+def read_parse_audit_log():
+    log_entries = []
+    error = None
+    try:
+        if os.path.exists(LOG_FILE_PATH):
+            with open(LOG_FILE_PATH, 'r', encoding='utf-8') as f:
+                lines = f.readlines(); lines.reverse() # Show newest first
+                for line_num, line in enumerate(lines, 1):
+                    parts = line.strip().split(' | ')
+                    if len(parts) == 7:
+                        entry = {}
+                        try:
+                            entry['timestamp'] = parts[0].strip()
+                            entry['user'] = parts[1].split(':', 1)[-1].strip() if ':' in parts[1] else parts[1].strip()
+                            entry['model'] = parts[2].split(':', 1)[-1].strip() if ':' in parts[2] else parts[2].strip()
+                            entry['findings'] = parts[3].split(':', 1)[-1].strip() if ':' in parts[3] else parts[3].strip()
+                            entry['original_excerpt'] = parts[4].split(':', 1)[-1].strip() if ':' in parts[4] else parts[4].strip()
+                            entry['redacted_excerpt'] = parts[5].split(':', 1)[-1].strip() if ':' in parts[5] else parts[5].strip()
+                            entry['error_msg'] = parts[6].split(':', 1)[-1].strip() if ':' in parts[6] else parts[6].strip()
+                            log_entries.append(entry)
+                        except IndexError as e: print(f"Warning: Could not parse log line {line_num} due to missing parts: '{line.strip()}' - Error: {e}")
+                        except Exception as parse_e: print(f"Warning: Could not parse log line {line_num}: '{line.strip()}' - Error: {parse_e}")
+                    else: print(f"Warning: Skipping malformed log line {line_num} (incorrect parts: {len(parts)}): '{line.strip()}'")
+        else: print("Audit log file not found.")
+    except Exception as e: print(f"Error reading audit log file: {e}"); error = f"Could not read audit log file: {str(e)}"
+    return log_entries, error
 
 # --- Flask Routes ---
 @app.route('/', methods=['GET', 'POST'])
 def home():
     results = None; original_text_display = ""; uploaded_filename = None; error = None; llm_response = None; text_sent_to_llm = None; source_description = "No input processed yet."; placeholders_used = None; user_identifier = "anonymous"
+    audit_log_entries = []; audit_log_error = None
     if request.method == 'POST':
         text_input_from_area = request.form.get('text_to_analyze', ''); file = request.files.get('file_to_analyze'); content_to_analyze = None
         if file and file.filename:
@@ -368,7 +356,6 @@ def home():
                     if file_ext == 'txt': content_to_analyze = extract_text_from_txt(file.stream)
                     elif file_ext == 'pdf': content_to_analyze = extract_text_from_pdf(file.stream)
                     elif file_ext == 'docx': content_to_analyze = extract_text_from_docx(file.stream)
-                    # Corrected error handling block
                     if content_to_analyze is None or content_to_analyze == "[ERROR: PDF is encrypted]":
                         error_reason = "Check file content/corruption/libraries."
                         if content_to_analyze == "[ERROR: PDF is encrypted]":
@@ -402,7 +389,18 @@ def home():
         elif error: results = None; llm_response = None; text_sent_to_llm = None; placeholders_used = None; log_orig_excerpt = "Error processing input"; log_red_excerpt = "Error processing input"
         try: safe_orig_excerpt = log_orig_excerpt.replace('|', '/'); safe_red_excerpt = log_red_excerpt.replace('|', '/'); safe_error_msg = log_error.replace('|', '/'); log_message = (f"User:{user_identifier} | Model:{log_model} | Findings:{log_num_findings} | OriginalExcerpt:{safe_orig_excerpt} | RedactedExcerpt:{safe_red_excerpt} | Error:{safe_error_msg}"); audit_logger.info(log_message)
         except Exception as log_e: print(f"!!! FAILED TO WRITE AUDIT LOG: {log_e} !!!")
-    return render_template('index.html', results=results, original_text=original_text_display, uploaded_filename=uploaded_filename, error=error, redacted_text=text_sent_to_llm, llm_response=llm_response, placeholders_used=placeholders_used)
+
+    # Read Audit Log on GET and POST requests
+    audit_log_entries, audit_log_error = read_parse_audit_log()
+
+    return render_template('index.html',
+                           results=results, original_text=original_text_display,
+                           uploaded_filename=uploaded_filename, error=error,
+                           redacted_text=text_sent_to_llm, llm_response=llm_response,
+                           placeholders_used=placeholders_used,
+                           audit_log_entries=audit_log_entries, # Pass audit data
+                           audit_log_error=audit_log_error)     # Pass audit error
+
 
 # --- Main Execution ---
 if __name__ == '__main__':
