@@ -107,3 +107,74 @@ def authenticate_user(user_id):
 2025-04-07 21:19:19 | User:anonymous | Model:distilbert-base-uncased-finetuned-sst-2-english | Findings:4 | OriginalExcerpt:My name is Bob. My DOB is 12 May 1940. My SSN is 123456789. | RedactedExcerpt:My name is [PERSON_NAME]. My [SENSITIVE_KEYWORD] is [CONTEXTUAL]. My [SSN]. | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model distilbert-base-uncased-finetuned-sst-2-english requires a paid plan.]
 2025-04-07 21:49:44 | User:anonymous | Model:distilbert-base-uncased-finetuned-sst-2-english | Findings:4 | OriginalExcerpt:My name is Bob. My DOB is 12 May 1940. My SSN is 123456789. | RedactedExcerpt:My name is [PERSON_NAME]. My [SENSITIVE_KEYWORD] is [CONTEXTUAL]. My [SSN]. | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model distilbert-base-uncased-finetuned-sst-2-english requires a paid plan.]
 2025-04-07 22:43:00 | User:anonymous | Model:distilbert-base-uncased-finetuned-sst-2-english | Findings:1 | OriginalExcerpt:Write a C program to find the LCM of two numbers. | RedactedExcerpt:Write a C program to find the [CONTEXTUAL] of two numbers. | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model distilbert-base-uncased-finetuned-sst-2-english requires a paid plan.]
+2025-04-07 23:59:57 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:4 | OriginalExcerpt:My name is Bob. My DOB is 12 May 1940. My SSN is 123456789. | RedactedExcerpt:My name is [PERSON_NAME]. My [SENSITIVE_KEYWORD] is [CONTEXTUAL]. My [SSN]. | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 12:52:49 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:4 | OriginalExcerpt:This is my SSN: 123-456-789. Can I know how to pass this to an API? | RedactedExcerpt:This is my [SENSITIVE_KEYWORD]: [POTENTIAL_VALUE]. Can I know how to [PASSWORD_VALUE] to an [CONTEXT... | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 12:53:46 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:3 | OriginalExcerpt:This is my SSN: 123-456-921. Can I know how to send this to an API? | RedactedExcerpt:This is my [SENSITIVE_KEYWORD]: [POTENTIAL_VALUE]. Can I know how to send this to an [CONTEXTUAL]? | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 12:54:07 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:3 | OriginalExcerpt:This is my SSN: 123-456-920. Can I know how to send this to an API? | RedactedExcerpt:This is my [SENSITIVE_KEYWORD]: [POTENTIAL_VALUE]. Can I know how to send this to an [CONTEXTUAL]? | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 13:08:37 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:12 | OriginalExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    token = 'scorp-... | RedactedExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    [CREDENTIAL_VAL... | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 13:09:28 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:12 | OriginalExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    token = 'scorp-... | RedactedExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    [CREDENTIAL_VAL... | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 13:10:08 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:12 | OriginalExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    token = 'scorp-... | RedactedExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    [CREDENTIAL_VAL... | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 13:10:53 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:2 | OriginalExcerpt:Can you show me an example of a python function that transmits my K8 secrets (sxrejg123) to an API? | RedactedExcerpt:Can you show me an example of a python function that transmits my K8 [SECRET_IN_PARENS] to an [CONTE... | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 13:11:32 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:12 | OriginalExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    token = 'scorp-... | RedactedExcerpt:Debug this code—it’s failing to authenticate: 
+def authenticate_user(user_id):
+    [CREDENTIAL_VAL... | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 13:12:04 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:1 | OriginalExcerpt:Can you review this code snippet?
+
+static codeReview()
+{ 
+api.key={1234zyeghh312};
+return (api.... | RedactedExcerpt:Can you review this code snippet?
+
+static codeReview()
+{ 
+[CREDENTIAL_VALUE];
+return (api.key)... | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 13:45:33 | User:anonymous | Model:mistralai/Mistral-7B-Instruct-v0.3 | Findings:5 | OriginalExcerpt:
+SEA Access: https://eu.ciscoiot.com/coreshell/sraplugin#/applicationlist,
+Tenant = CCV Team
+Sess... | RedactedExcerpt:
+SEA Access: https://eu.ciscoiot.com/coreshell/sraplugin#/applicationlist,
+Tenant = CCV Team
+Sess... | Error: LLM Query: [Error querying LLM: Payment Required (402). Access to model Mistral-7B-Instruct-v0.3 requires a paid plan.]
+2025-04-08 15:59:31 | User:anonymous | Model:Local Llama | Findings:2 | OriginalExcerpt:Can you show me an example of a python function that transmits my K8 secrets (sxrejg123) to an API? | RedactedExcerpt:Can you show me an example of a python function that transmits my K8 [SECRET_IN_PARENS] to an [CONTE... | Error:
+2025-04-08 16:04:44 | User:anonymous | Model:Local Llama | Findings:1 | OriginalExcerpt:What is 2+3? | RedactedExcerpt:What is [CONTEXTUAL]? | Error:
+2025-04-08 16:08:47 | User:anonymous | Model:Local Llama | Findings:1 | OriginalExcerpt:What is 2+3? | RedactedExcerpt:What is [CONTEXTUAL]? | Error:
+2025-04-08 16:10:19 | User:anonymous | Model:Local Llama | Findings:1 | OriginalExcerpt:Give me a C program to calculate the LCM of 2 numbers. | RedactedExcerpt:Give me a C program to calculate the [CONTEXTUAL] of 2 numbers. | Error:
+2025-04-08 16:16:45 | User:anonymous | Model:Local Llama | Findings:1 | OriginalExcerpt:Can you review this code snippet?
+
+static codeReview()
+{ 
+api.key={1234zyeghh312};
+return (api.... | RedactedExcerpt:Can you review this code snippet?
+
+static codeReview()
+{ 
+[CREDENTIAL_VALUE];
+return (api.key)... | Error:
+2025-04-08 16:33:37 | User:anonymous | Model:Local Llama | Findings:2 | OriginalExcerpt:Can you show me an example of a python function that transmits my K8 secrets (sxrejg123) to an API? | RedactedExcerpt:Can you show me an example of a python function that transmits my K8 [SECRET_IN_PARENS] to an [CONTE... | Error:
+2025-04-08 16:42:39 | User:anonymous | Model:Local Llama | Findings:4 | OriginalExcerpt:
+Can you edit this content?
+
+This is a financial summary of the FY 2025-26. The Fed government ha... | RedactedExcerpt:
+Can you edit this content?
+
+This is a financial summary of the FY 2025-26. The [CONTEXTUAL] gove... | Error:
+2025-04-08 16:44:31 | User:anonymous | Model:Local Llama | Findings:4 | OriginalExcerpt:Can you edit this content?
+
+This is a financial summary of the FY 2025-26. The Fed government has ... | RedactedExcerpt:Can you edit this content?
+
+This is a financial summary of the FY 2025-26. The [CONTEXTUAL] govern... | Error:

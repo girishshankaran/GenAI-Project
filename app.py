@@ -2,14 +2,14 @@
 
 import re
 import os
-import requests
+# import requests # No longer needed for LLM query if running locally
 import logging
 from datetime import datetime
 # Make sure to import these for the admin routes & flash messages
 from flask import Flask, render_template, request, url_for, redirect, flash
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-from collections import Counter # <-- ADDED THIS IMPORT
+from collections import Counter # Import Counter
 
 # --- Plotly and Counter for Graphing ---
 try:
@@ -19,7 +19,7 @@ try:
     # from collections import Counter # Already imported above
     PLOTLY_AVAILABLE = True
 except ImportError:
-    print("Warning: Plotly not installed. Graphing feature disabled. Run: pip install plotly pandas") # Added pandas recommendation
+    print("Warning: Plotly not installed. Graphing feature disabled. Run: pip install plotly pandas")
     PLOTLY_AVAILABLE = False
 
 
@@ -39,40 +39,71 @@ except ImportError:
     nlp = None
 # --- End spaCy Setup ---
 
-load_dotenv() # Load variables from .env file
+# --- Local LLM Setup (llama-cpp-python) ---
+LLM_MODE = "local" # Set to "local" or "api"
+# !!! IMPORTANT: MAKE SURE THIS FILENAME MATCHES THE GGUF FILE YOU DOWNLOADED !!!
+LOCAL_MODEL_PATH = "/Users/gisankar/Documents/GenAI-Project/models/Llama-3.2-3B-Instruct-Q4_K_M.gguf" # Using Absolute Path
+llm_local = None # Initialize
 
-# Import file reading libraries
+if LLM_MODE == "local":
+    try:
+        from llama_cpp import Llama
+        if os.path.exists(LOCAL_MODEL_PATH):
+            try:
+                print(f"Loading local Llama model from: {LOCAL_MODEL_PATH}")
+                # *** REMOVED n_gpu_layers parameter from constructor ***
+                llm_local = Llama(
+                    model_path=LOCAL_MODEL_PATH,
+                    n_ctx=2048,        # Context window size
+                    n_threads=None,    # Use default optimal threads
+                    verbose=False      # Set to True for detailed llama.cpp loading output
+                )
+                print(f"Local Llama model loaded successfully.")
+                # Optional check if GPU/Metal is being used (might depend on library version)
+                # print(f"  Model Info: {llm_local.metadata if hasattr(llm_local, 'metadata') else 'N/A'}")
+
+            except Exception as e:
+                print(f"!!! ERROR loading local Llama model: {e}")
+                # Print detailed traceback for debugging loading errors
+                import traceback
+                traceback.print_exc()
+                llm_local = None
+        else:
+            print(f"!!! ERROR: Local model file not found at {LOCAL_MODEL_PATH}")
+            llm_local = None
+    except ImportError:
+        print("WARNING: llama-cpp-python library not installed. Local LLM functionality disabled.")
+        print("Install using instructions (potentially with CMAKE_ARGS for Metal).")
+        llm_local = None
+# --- End Local LLM Setup ---
+
+
+load_dotenv()
+
+# --- PDF/DOCX Imports ---
 try: import PyPDF2
 except ImportError: PyPDF2=None; print("PyPDF2 disabled.")
 try: import docx
 except ImportError: docx=None; print("python-docx disabled.")
 
 app = Flask(__name__)
-# Set a secret key - needed for flash messages
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-very-secret-dev-key-change-me')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-should-be-complex')
 
-# --- Audit Logging Setup (to file) ---
-LOG_FILE_PATH = 'audit.log' # Define log path centrally
-audit_logger = logging.getLogger('audit')
-audit_logger.setLevel(logging.INFO)
-audit_handler = logging.FileHandler(LOG_FILE_PATH, encoding='utf-8')
-audit_handler.setLevel(logging.INFO)
-audit_formatter = logging.Formatter('%(asctime)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-audit_handler.setFormatter(audit_formatter)
-if not audit_logger.hasHandlers():
-    audit_logger.addHandler(audit_handler)
-# --- End Audit Logging Setup ---
+# --- Audit Logging Setup ---
+LOG_FILE_PATH = 'audit.log'
+audit_logger = logging.getLogger('audit'); audit_logger.setLevel(logging.INFO)
+audit_handler = logging.FileHandler(LOG_FILE_PATH, encoding='utf-8'); audit_handler.setLevel(logging.INFO)
+audit_formatter = logging.Formatter('%(asctime)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S'); audit_handler.setFormatter(audit_formatter)
+if not audit_logger.hasHandlers(): audit_logger.addHandler(audit_handler)
 
 # --- Configuration ---
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def allowed_file(filename): return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # --- Text Extraction Helper Functions ---
 def extract_text_from_txt(file_stream):
     try: file_stream.seek(0); return file_stream.read().decode('utf-8', errors='ignore')
-    except Exception as e: print(f"Error reading TXT file: {e}"); return None
+    except Exception as e: print(f"Error reading TXT: {e}"); return None
 def extract_text_from_pdf(file_stream):
     if not PyPDF2: return None; text = "";
     try:
@@ -90,59 +121,33 @@ def extract_text_from_docx(file_stream):
         file_stream.seek(0); document = docx.Document(file_stream)
         for para in document.paragraphs: text += para.text + "\n"
         return text if text else None
-    except Exception as e: print(f"Error reading DOCX file: {e}"); return None
+    except Exception as e: print(f"DOCX Error: {e}"); return None
 
-# --- Hugging Face API Setup ---
-HF_API_KEY = os.environ.get("HF_API_KEY")
-if not HF_API_KEY: print("WARNING: HF_API_KEY env var not set. LLM disabled.")
-API_URL = "https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english"
-headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-
-# --- LLM Query Function ---
+# --- LLM Query Function (Local Llama Implementation) ---
 def query_llm(text):
-    if not HF_API_KEY or not API_URL: return "[LLM Query Skipped - API Key or URL not configured]"
+    global llm_local
+    if LLM_MODE != "local" or not llm_local: return "[LLM Query Skipped - Local model not configured or loaded]"
     if not text or not isinstance(text, str) or not text.strip(): return "[LLM Query Skipped - Input text is empty or invalid]"
-    if "distilbert" in API_URL or "sentiment" in API_URL: prompt = text; payload = {"inputs": prompt}; is_classification = True
-    else: prompt = f"Process the following text and provide a relevant response:\n\n---\n{text}\n---\n\nResponse:"; payload = {"inputs": prompt, "parameters": {"max_new_tokens": 250, "return_full_text": False, "temperature": 0.7, "top_p": 0.9,}}; is_classification = False
+    system_prompt = "You are a helpful assistant. Process the user's text and provide a relevant response."
+    user_prompt = text
+    prompt_string = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{system_prompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{user_prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+    print(f"Generating response using local model: {LOCAL_MODEL_PATH}")
+    generated_text = "[Error: Local LLM generation failed]"
     try:
-        print(f"Sending request to LLM: {API_URL}"); response = requests.post(API_URL, headers=headers, json=payload, timeout=90)
-        response.raise_for_status(); result = response.json(); print(f"LLM Raw Response: {result}"); generated_text = None
-        if is_classification:
-            if isinstance(result, list) and result and isinstance(result[0], list) and result[0]:
-                if isinstance(result[0][0], dict) and 'label' in result[0][0]: top_result = result[0][0]; generated_text = f"Sentiment Analysis: Label='{top_result.get('label')}', Score={top_result.get('score'):.4f}"
-                else: generated_text = f"[LLM Response (Unknown Format): {str(result)[:200]}...]"
-            else: generated_text = f"[LLM Response (Non-List Format): {str(result)[:200]}...]"
-        else:
-            if isinstance(result, list) and result:
-                if isinstance(result[0], dict) and 'generated_text' in result[0]: generated_text = result[0]['generated_text']
-                elif isinstance(result[0], str): generated_text = result[0]
-            elif isinstance(result, dict) and 'generated_text' in result: generated_text = result.get('generated_text')
-            if generated_text:
-                if generated_text.strip().startswith(prompt.strip()) and not is_classification: generated_text = generated_text[len(prompt):].strip()
-                elif "Response:" in generated_text: generated_text = generated_text.split("Response:", 1)[-1].strip()
-        if generated_text: return generated_text.strip()
-        else:
-            print(f"Could not parse expected output from LLM response: {result}")
-            if isinstance(result, dict) and 'error' in result:
-                 api_error = result['error']; print(f"Hugging Face API Error Message: {api_error}")
-                 if isinstance(api_error, str) and "currently loading" in api_error.lower(): return f"[LLM Info: Model is currently loading, please wait ({result.get('estimated_time', 'unknown'):.1f}s estimated) and try again.]"
-                 else: return f"[Error: Received error from API: {api_error}]"
-            return "[Error: LLM response format unexpected or empty]"
-    except requests.exceptions.Timeout: print(f"Error querying LLM: Request timed out."); return "[Error: LLM request timed out]"
-    except requests.exceptions.RequestException as e:
-        error_detail = str(e); status_code = "N/A"; resp_text = "N/A";
-        if e.response is not None: status_code = e.response.status_code; resp_text = e.response.text[:500]
-        print(f"Error querying LLM ({API_URL}): {error_detail} | Status Code: {status_code} | Response: {resp_text}")
-        if status_code == 401: return "[Error querying LLM: Authorization failed (401). Check your HF_API_KEY.]"
-        elif status_code == 402: return f"[Error querying LLM: Payment Required (402). Access to model {API_URL.split('/')[-1]} requires a paid plan.]"
-        elif status_code == 403: return f"[Error querying LLM: Forbidden (403). Ensure you accepted the terms for model {API_URL.split('/')[-1]} on Hugging Face.]"
-        elif status_code == 429: return "[Error querying LLM: Rate limit possibly exceeded (429).]"
-        elif status_code == 503: return "[Error querying LLM: Service Unavailable (503). Model might be loading or temporarily down. Try again later.]"
-        elif status_code >= 500: return f"[Error querying LLM: Server error ({status_code}). Try again later.]"
-        else: return f"[Error querying LLM: {str(e)}]"
-    except (IndexError, KeyError, TypeError) as e: print(f"Error parsing LLM response: {e}. Response was: {result if 'result' in locals() else 'Not available'}"); return "[Error: Invalid response structure from LLM]"
-    except Exception as e: print(f"An unexpected error occurred during LLM query: {e}"); return f"[An unexpected error occurred during LLM query: {str(e)}]"
-
+        output = llm_local(
+            prompt_string, max_tokens=250,
+            stop=["<|eot_id|>", "<|end_of_text|>", "<|end_header_id|>", "assistant<|end_header_id|>"],
+            temperature=0.7, top_p=0.9, echo=False
+        )
+        if output and 'choices' in output and output['choices']:
+            response_content = output['choices'][0]['text']; print(f"Local LLM Raw Response Content: {response_content[:200]}...")
+            generated_text = response_content.strip()
+        else: print(f"Could not parse response from local LLM output: {output}"); generated_text = "[Error: Local LLM response format unexpected]"
+    except Exception as e:
+        print(f"An unexpected error occurred during local LLM generation: {e}")
+        import traceback; traceback.print_exc()
+        generated_text = f"[An unexpected error occurred during local LLM generation: {str(e)}]"
+    return generated_text
 
 # --- Redaction Functions ---
 PLACEHOLDER_MAP = { # Full map
@@ -189,12 +194,10 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
     if not text or not isinstance(text, str): return {"found_issues": False, "findings": []}
     findings = []; processed_text_positions = set()
     original_text = text; lower_text = original_text.lower()
-    # Keep add_finding simple without debug prints unless needed
     def add_finding(category, type, value, description, start_index, end_index):
         if not (0 <= start_index < end_index <= len(original_text)): return
         span = (start_index, end_index)
         if any(i in processed_text_positions for i in range(start_index, end_index)): return
-        # print(f"DEBUG ADD - Adding Finding: {type} | Cat: {category} | Val: '{value}' | Span: {span}") # Uncomment for debug
         findings.append({"category": category, "type": type, "value": value, "description": description, "span": span})
         for i in range(start_index, end_index): processed_text_positions.add(i)
     # 1. spaCy NER Processing
@@ -217,7 +220,6 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
                 if category != "Unknown": spacy_findings_temp.append({"category": category, "type": finding_type, "value": entity_text, "description": f"Detected '{label}' entity (via spaCy NER).", "span": (ent.start_char, ent.end_char)})
         except Exception as e: print(f"Error during spaCy processing: {e}")
     else: print("spaCy NER skipped as model is not loaded.")
-    # print(f"DEBUG: spaCy Findings Temp = {spacy_findings_temp}") # Uncomment for debug
     # 2. Keyword Scanning
     keyword_categories = { # Full lists
         "Legal": [r"attorney-client\s+privilege", r"legal\s+hold", r"litigation", r"confidential\s+settlement", r"under\s+seal", r"privileged\s+and\s+confidential", r"cease\s+and\s+desist", r"nda", r"non-disclosure\s+agreement"],
@@ -236,7 +238,6 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
                              temp_keyword_findings.append({"category": category, "type": "Keyword", "value": original_text[start:end], "description": f"Detected keyword: '{original_text[start:end]}'.", "span": (start, end)})
                              for i in range(start, end): keyword_processed_positions_check.add(i)
                 except re.error as e: print(f"Warning: Skipping invalid regex keyword: '{keyword_pattern}' - {e}")
-    # print(f"DEBUG: Keyword Findings Temp = {temp_keyword_findings}") # Uncomment for debug
     # 3. Keyword Proximity Scan
     KEYWORDS_INDICATING_VALUE = {'password', 'pass', 'pwd', 'secret', 'key', 'token', 'credential', 'credentials', 'username', 'user', 'login', 'userid', 'user_id', 'account', 'acct', 'accounts', 'ssn', 'social security number', 'credit card', 'bank account', 'email', 'phone'}
     POTENTIAL_VALUE_REGEX = r'\b([a-zA-Z0-9\-_+=/.@]{5,})\b'; PROXIMITY_WINDOW = 50
@@ -253,7 +254,6 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
                             potential_value_findings.append({"category": kw_finding['category'], "type": "Value near Keyword", "value": value, "description": f"Potential value found near keyword '{kw_finding['value']}'.", "span": (val_start_abs, val_end_abs)})
                             for i in range(val_start_abs, val_end_abs): proximity_checked_indices.add(i)
              except re.error as e: print(f"Warning: Error during proximity value search: {e}")
-    # print(f"DEBUG: Proximity Value Findings Temp = {potential_value_findings}") # Uncomment for debug
     # 4. Regex Pattern Matching
     regex_patterns = [ # Full list
         (r'\b(password|passwd|secret|pwd|pass)\b(?:\s+(?:is|was|are|be)\s+|\s*[:=]\s*|\s+)(\S+)', "Password Assignment", "Credentials", "Potential password assignment.", re.IGNORECASE),
@@ -287,17 +287,13 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
                       if value and start < end: regex_findings_temp.append({"category": category, "type": type, "value": value, "description": description, "span": (start, end)})
             except re.error as e: print(f"Warning: Skipping invalid regex pattern: {pattern} - {e}")
             except IndexError as e: print(f"Warning: Index error during regex: {pattern} - {e}")
-    # print(f"DEBUG: Regex Findings Temp = {regex_findings_temp}") # Uncomment for debug
     # 5. Add Findings in Priority Order
-    # print("\nDEBUG: Adding findings with overlap checks...") # Uncomment for debug
     for finding in regex_findings_temp: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     for finding in temp_keyword_findings: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     for finding in potential_value_findings: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     for finding in spacy_findings_temp: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
-    # print("DEBUG: Finished adding findings.\n") # Uncomment for debug
     # --- End Finding Addition ---
     sorted_findings = sorted(findings, key=lambda f: (f['span'][0], -f['span'][1]))
-    # print(f"DEBUG: Final Findings List (Sorted) = {sorted_findings}") # Uncomment for debug
     return {"found_issues": len(sorted_findings) > 0, "findings": sorted_findings}
 
 
@@ -313,14 +309,10 @@ def read_parse_audit_log():
                     if len(parts) == 7:
                         entry = {}
                         try:
-                            entry['timestamp'] = parts[0].strip()
-                            entry['user'] = parts[1].split(':', 1)[-1].strip() if ':' in parts[1] else parts[1].strip()
-                            entry['model'] = parts[2].split(':', 1)[-1].strip() if ':' in parts[2] else parts[2].strip()
-                            entry['findings'] = parts[3].split(':', 1)[-1].strip() if ':' in parts[3] else parts[3].strip()
-                            entry['original_excerpt'] = parts[4].split(':', 1)[-1].strip() if ':' in parts[4] else parts[4].strip()
-                            entry['redacted_excerpt'] = parts[5].split(':', 1)[-1].strip() if ':' in parts[5] else parts[5].strip()
-                            entry['error_msg'] = parts[6].split(':', 1)[-1].strip() if ':' in parts[6] else parts[6].strip()
-                            log_entries.append(entry)
+                            entry['timestamp'] = parts[0].strip(); entry['user'] = parts[1].split(':', 1)[-1].strip() if ':' in parts[1] else parts[1].strip()
+                            entry['model'] = parts[2].split(':', 1)[-1].strip() if ':' in parts[2] else parts[2].strip(); entry['findings'] = parts[3].split(':', 1)[-1].strip() if ':' in parts[3] else parts[3].strip()
+                            entry['original_excerpt'] = parts[4].split(':', 1)[-1].strip() if ':' in parts[4] else parts[4].strip(); entry['redacted_excerpt'] = parts[5].split(':', 1)[-1].strip() if ':' in parts[5] else parts[5].strip()
+                            entry['error_msg'] = parts[6].split(':', 1)[-1].strip() if ':' in parts[6] else parts[6].strip(); log_entries.append(entry)
                         except IndexError as e: print(f"Warning: Could not parse log line {line_num} due to missing parts: '{line.strip()}' - Error: {e}")
                         except Exception as parse_e: print(f"Warning: Could not parse log line {line_num}: '{line.strip()}' - Error: {parse_e}")
                     else: print(f"Warning: Skipping malformed log line {line_num} (incorrect parts: {len(parts)}): '{line.strip()}'")
@@ -342,6 +334,7 @@ def home():
                     if file_ext == 'txt': content_to_analyze = extract_text_from_txt(file.stream)
                     elif file_ext == 'pdf': content_to_analyze = extract_text_from_pdf(file.stream)
                     elif file_ext == 'docx': content_to_analyze = extract_text_from_docx(file.stream)
+                    # Corrected error handling block for file processing
                     if content_to_analyze is None or content_to_analyze == "[ERROR: PDF is encrypted]":
                         error_reason = "Check file content/corruption/libraries.";
                         if content_to_analyze == "[ERROR: PDF is encrypted]": error_reason = "PDF is password-protected."
@@ -363,14 +356,14 @@ def home():
                     for finding in findings_to_process: used_placeholders_set.add(get_placeholder(finding))
                 placeholders_used = sorted(list(used_placeholders_set)); text_sent_to_llm = redact_text(content_to_analyze, results['findings']); log_red_excerpt = (text_sent_to_llm[:100] + '...') if len(text_sent_to_llm) > 100 else text_sent_to_llm
             else: print("No issues found needing redaction, sending original text."); text_sent_to_llm = content_to_analyze; log_red_excerpt = log_orig_excerpt; placeholders_used = None
-            try: log_model = API_URL.split('/models/')[-1] if '/models/' in API_URL else API_URL
-            except Exception: log_model = "ErrorParsingURL"
+            # Determine model name for logging
+            log_model = "Local Llama" if LLM_MODE == "local" and llm_local else (API_URL.split('/models/')[-1] if LLM_MODE == "api" and HF_API_KEY and '/models/' in API_URL else "LLM_Disabled_or_Unknown")
             llm_response = query_llm(text_sent_to_llm)
             if llm_response and llm_response.startswith(("[Error", "[LLM Info")): log_error += f" LLM Query: {llm_response}"
             print("LLM query finished.")
         elif error: results = None; llm_response = None; text_sent_to_llm = None; placeholders_used = None; log_orig_excerpt = "Error processing input"; log_red_excerpt = "Error processing input"
-        try: # Audit Logging
-            safe_orig_excerpt = log_orig_excerpt.replace('|', '/'); safe_red_excerpt = log_red_excerpt.replace('|', '/'); safe_error_msg = log_error.replace('|', '/'); log_message = (f"User:{user_identifier} | Model:{log_model} | Findings:{log_num_findings} | OriginalExcerpt:{safe_orig_excerpt} | RedactedExcerpt:{safe_red_excerpt} | Error:{safe_error_msg}"); audit_logger.info(log_message)
+        # Audit Logging
+        try: safe_orig_excerpt = log_orig_excerpt.replace('|', '/'); safe_red_excerpt = log_red_excerpt.replace('|', '/'); safe_error_msg = log_error.replace('|', '/'); log_message = (f"User:{user_identifier} | Model:{log_model} | Findings:{log_num_findings} | OriginalExcerpt:{safe_orig_excerpt} | RedactedExcerpt:{safe_red_excerpt} | Error:{safe_error_msg}"); audit_logger.info(log_message)
         except Exception as log_e: print(f"!!! FAILED TO WRITE AUDIT LOG: {log_e} !!!")
 
     # Don't pass audit log data to the main index template
@@ -382,39 +375,24 @@ def home():
 
 
 # --- ADMIN ROUTES (NO SECURITY) ---
-
 @app.route('/admin/user_report')
 def user_activity_report():
-    """Displays basic user activity report from log file."""
-    log_entries, error = read_parse_audit_log()
-    report_data = {} # Initialize empty dict
+    log_entries, error = read_parse_audit_log(); report_data = {}
     if not error:
-        # Simple aggregation (user is always anonymous)
-        total_requests = len(log_entries)
-        total_findings_overall = 0
-        model_usage = Counter()
+        total_requests = len(log_entries); total_findings_overall = 0; model_usage = Counter()
         for entry in log_entries:
             try: total_findings_overall += int(entry.get('findings', 0))
             except ValueError: pass
             model = entry.get('model', 'Unknown')
             if model != 'N/A': model_usage[model] += 1
-        report_data = {
-            'total_requests': total_requests,
-            'total_findings': total_findings_overall,
-            'model_usage': dict(model_usage.most_common()),
-            'log_entries': log_entries[:100] # Show recent raw entries
-        }
-    # Create templates/admin_user_report.html
+        report_data = {'total_requests': total_requests, 'total_findings': total_findings_overall, 'model_usage': dict(model_usage.most_common()), 'log_entries': log_entries[:100]}
+    # Assumes templates/admin_user_report.html exists
     return render_template('admin_user_report.html', report_data=report_data, error=error)
-
 
 @app.route('/admin/findings_graph')
 def findings_graph():
-    """Displays approximate findings graph from log file."""
     graphJSON = None; error = None
-    if not PLOTLY_AVAILABLE:
-         flash("Plotly library not installed. Cannot generate graph.", "warning")
-         return render_template('admin_findings_graph.html', graphJSON=None, error="Plotly not installed")
+    if not PLOTLY_AVAILABLE: flash("Plotly library not installed. Cannot generate graph.", "warning"); return render_template('admin_findings_graph.html', graphJSON=None, error="Plotly not installed")
     log_entries, error = read_parse_audit_log()
     if not error:
         try:
@@ -422,42 +400,46 @@ def findings_graph():
             for entry in log_entries:
                 try:
                     count = int(entry.get('findings', 0))
-                    # Very crude estimation logic - needs refinement with better logging
+                    # Crude estimation logic
                     if count > 0: findings_summary['PII'] += int(count * 0.5)
                     if count > 1: findings_summary['Credentials'] += int(count * 0.2)
                     if count > 2: findings_summary['Keyword'] += int(count * 0.2)
                     if count > 3: findings_summary['Contextual'] += int(count * 0.1)
-                    # Add a basic 'Other' count just to have some data if counts are low
                     if 0 < count <= 3: findings_summary['Other'] += 1
                 except ValueError: continue
-            # Remove categories with zero counts for a cleaner graph
-            findings_summary = Counter({k: v for k, v in findings_summary.items() if v > 0})
+            findings_summary = Counter({k: v for k, v in findings_summary.items() if v > 0}) # Remove zeros
             if findings_summary:
                  fig = go.Figure(data=[go.Bar( x=list(findings_summary.keys()), y=list(findings_summary.values()) )])
                  fig.update_layout(title_text='Approximate Finding Category Frequency (Estimate from Logs)')
                  graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             else: graphJSON = None
         except Exception as e: print(f"Error generating graph: {e}"); flash(f"Error generating graph: {e}", "danger"); graphJSON = None; error = str(e)
-    # Create templates/admin_findings_graph.html
+    # Assumes templates/admin_findings_graph.html exists
     return render_template('admin_findings_graph.html', graphJSON=graphJSON, error=error)
-
 # --- End Admin Routes ---
 
 
 # --- Main Execution ---
 if __name__ == '__main__':
     print("-" * 50); print("Starting GenAI Shield Application...")
-    print("Ensure required libraries are installed:"); print("  pip install Flask requests PyPDF2 python-docx python-dotenv spacy plotly pandas") # Added plotly/pandas
+    print("Ensure required libraries are installed:"); print("  pip install Flask requests PyPDF2 python-docx python-dotenv spacy plotly pandas llama-cpp-python huggingface_hub")
     print(f"Allowed file extensions: {ALLOWED_EXTENSIONS}")
     if not PyPDF2: print("  (PDF processing disabled)")
     if not docx: print("  (DOCX processing disabled)")
-    if not nlp: print("  (spaCy NER processing disabled - install spacy and download model 'en_core_web_sm')")
+    if not nlp: print("  (spaCy NER processing disabled)")
     else: print("  (spaCy NER processing enabled)")
-    if not PLOTLY_AVAILABLE: print("  (Graphing disabled - install plotly and pandas)") # Added plotly check
+    if not PLOTLY_AVAILABLE: print("  (Graphing disabled)")
     else: print("  (Graphing enabled)")
+    # Updated LLM status message
+    if LLM_MODE == 'local':
+        if llm_local: print(f"  (Local LLM mode enabled - using {LOCAL_MODEL_PATH})")
+        else: print(f"  (Local LLM mode selected but FAILED to load model from {LOCAL_MODEL_PATH})")
+    elif LLM_MODE == 'api':
+        print(f"  (API LLM mode enabled - using {API_URL})")
+        if not HF_API_KEY: print("     WARNING: Hugging Face API Key (HF_API_KEY) not found."); print("              API LLM functionality will be disabled.")
+        else: print("     Ensure you have accepted terms for the selected model on huggingface.co (if applicable)")
+    else: print(f"  (Unknown LLM_MODE: {LLM_MODE})")
     print("Audit logs will be written to 'audit.log'"); print("-" * 50)
-    if HF_API_KEY: print(f"Using Hugging Face API Key: YES"); print(f"Using LLM Endpoint: {API_URL}"); print("Ensure you have accepted terms for the selected model on huggingface.co (if applicable)")
-    else: print("WARNING: Hugging Face API Key (HF_API_KEY) not found."); print("         LLM functionality will be disabled.")
-    print("-" * 50); app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
 
 # --- END OF FILE app.py ---
