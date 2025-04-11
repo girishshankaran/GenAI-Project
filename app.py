@@ -2,7 +2,7 @@
 
 import re
 import os
-# import requests # No longer needed for LLM query if running locally
+# import requests # Keep if using API mode, remove if only local
 import logging
 from datetime import datetime
 # Make sure to import these for the admin routes & flash messages
@@ -16,7 +16,6 @@ try:
     import plotly
     import plotly.graph_objs as go
     import json
-    # from collections import Counter # Already imported above
     PLOTLY_AVAILABLE = True
 except ImportError:
     print("Warning: Plotly not installed. Graphing feature disabled. Run: pip install plotly pandas")
@@ -41,9 +40,8 @@ except ImportError:
 
 # --- Local LLM Setup (llama-cpp-python) ---
 LLM_MODE = "local" # Set to "local" or "api"
-# !!! IMPORTANT: MAKE SURE THIS FILENAME MATCHES THE GGUF FILE YOU DOWNLOADED !!!
 LOCAL_MODEL_PATH = "/Users/gisankar/Documents/GenAI-Project/models/Llama-3.2-3B-Instruct-Q4_K_M.gguf" # Using Absolute Path
-llm_local = None # Initialize
+llm_local = None
 
 if LLM_MODE == "local":
     try:
@@ -51,30 +49,11 @@ if LLM_MODE == "local":
         if os.path.exists(LOCAL_MODEL_PATH):
             try:
                 print(f"Loading local Llama model from: {LOCAL_MODEL_PATH}")
-                # *** REMOVED n_gpu_layers parameter from constructor ***
-                llm_local = Llama(
-                    model_path=LOCAL_MODEL_PATH,
-                    n_ctx=2048,        # Context window size
-                    n_threads=None,    # Use default optimal threads
-                    verbose=False      # Set to True for detailed llama.cpp loading output
-                )
-                print(f"Local Llama model loaded successfully.")
-                # Optional check if GPU/Metal is being used (might depend on library version)
-                # print(f"  Model Info: {llm_local.metadata if hasattr(llm_local, 'metadata') else 'N/A'}")
-
-            except Exception as e:
-                print(f"!!! ERROR loading local Llama model: {e}")
-                # Print detailed traceback for debugging loading errors
-                import traceback
-                traceback.print_exc()
-                llm_local = None
-        else:
-            print(f"!!! ERROR: Local model file not found at {LOCAL_MODEL_PATH}")
-            llm_local = None
-    except ImportError:
-        print("WARNING: llama-cpp-python library not installed. Local LLM functionality disabled.")
-        print("Install using instructions (potentially with CMAKE_ARGS for Metal).")
-        llm_local = None
+                llm_local = Llama( model_path=LOCAL_MODEL_PATH, n_ctx=2048, n_threads=None, n_gpu_layers=0, verbose=False ) # Using n_gpu_layers=0 for CPU focus
+                print(f"Local Llama model loaded successfully (CPU mode).")
+            except Exception as e: print(f"!!! ERROR loading local Llama model: {e}"); import traceback; traceback.print_exc(); llm_local = None
+        else: print(f"!!! ERROR: Local model file not found at {LOCAL_MODEL_PATH}"); llm_local = None
+    except ImportError: print("WARNING: llama-cpp-python library not installed."); llm_local = None
 # --- End Local LLM Setup ---
 
 
@@ -113,8 +92,8 @@ def extract_text_from_pdf(file_stream):
             page_text = page.extract_text();
             if page_text: text += page_text + "\n"
         return text if text else None
-    except PyPDF2.errors.PdfReadError as e: print(f"Error reading PDF file (PdfReadError): {e}."); return None
-    except Exception as e: print(f"Error reading PDF file: {e}"); return None
+    except PyPDF2.errors.PdfReadError as e: print(f"PDF ReadError: {e}."); return None
+    except Exception as e: print(f"PDF Error: {e}"); return None
 def extract_text_from_docx(file_stream):
     if not docx: return None; text = "";
     try:
@@ -134,23 +113,18 @@ def query_llm(text):
     print(f"Generating response using local model: {LOCAL_MODEL_PATH}")
     generated_text = "[Error: Local LLM generation failed]"
     try:
-        output = llm_local(
-            prompt_string, max_tokens=250,
-            stop=["<|eot_id|>", "<|end_of_text|>", "<|end_header_id|>", "assistant<|end_header_id|>"],
-            temperature=0.7, top_p=0.9, echo=False
-        )
+        output = llm_local( prompt_string, max_tokens=250, stop=["<|eot_id|>", "<|end_of_text|>", "<|end_header_id|>", "assistant<|end_header_id|>"], temperature=0.7, top_p=0.9, echo=False )
         if output and 'choices' in output and output['choices']:
             response_content = output['choices'][0]['text']; print(f"Local LLM Raw Response Content: {response_content[:200]}...")
             generated_text = response_content.strip()
         else: print(f"Could not parse response from local LLM output: {output}"); generated_text = "[Error: Local LLM response format unexpected]"
-    except Exception as e:
-        print(f"An unexpected error occurred during local LLM generation: {e}")
-        import traceback; traceback.print_exc()
-        generated_text = f"[An unexpected error occurred during local LLM generation: {str(e)}]"
+    except Exception as e: print(f"An unexpected error occurred during local LLM generation: {e}"); import traceback; traceback.print_exc(); generated_text = f"[An unexpected error occurred during local LLM generation: {str(e)}]"
     return generated_text
 
 # --- Redaction Functions ---
-PLACEHOLDER_MAP = { # Full map
+# *** UPDATED PLACEHOLDER_MAP: Removed direct mappings for ignored spaCy types ***
+PLACEHOLDER_MAP = {
+    # Specific Types (matched by precise regex or NER)
     "Email Address": "[EMAIL]", "Phone Number Format (US)": "[PHONE]", "SSN Format (US)": "[SSN]",
     "Potential SSN (Loose Format)": "[SSN_LIKE]", "Potential Credit Card": "[CREDIT_CARD]",
     "API Key Format": "[API_KEY]", "Private Key Block": "[PRIVATE_KEY]", "Internal/Local IP": "[IP_ADDRESS]",
@@ -159,22 +133,31 @@ PLACEHOLDER_MAP = { # Full map
     "Bank Account Number": "[BANK_ACCOUNT]", "Date Format (MM/DD/YY or YYYY)": "[DATE]",
     "Project Codename": "[PROJECT_CODENAME]", "Potential Generic Key/Token": "[GENERIC_KEY]",
     "JSON Key Pair": "[JSON_SECRET_PAIR]", "Value in Parentheses": "[SECRET_IN_PARENS]",
-    "Value near Keyword": "[POTENTIAL_VALUE]", "PERSON": "[PERSON_NAME]", "GPE": "[LOCATION]",
-    "LOC": "[LOCATION]", "ORG": "[ORGANIZATION]", "DATE": "[DATE_ENTITY]", #"CARDINAL": "[NUMBER]", # Excluded
-    "MONEY": "[MONETARY_VALUE]", "NORP": "[GROUP]", "FAC": "[FACILITY]", "SSN Keyword": "[SSN_MENTIONED]",
-    "DOB Keyword": "[DOB_MENTIONED]", "Credentials": "[CREDENTIALS_INFO]", "Personal Data (PII)": "[PII_INFO]",
-    "Potential PII/Contextual": "[CONTEXTUAL_INFO]", "Confidential/Secret": "[CONFIDENTIAL_INFO]",
-    "Legal": "[LEGAL_INFO]", "Intellectual Property": "[IP_INFO]", "Network": "[NETWORK_INFO]",
-    "Identifier": "[IDENTIFIER_INFO]", "Keyword": "[SENSITIVE_KEYWORD]",
+    "Value near Keyword": "[POTENTIAL_VALUE]", # Kept for proximity scan logic
+    "PERSON": "[PERSON_NAME]", # Keep PERSON as it's PII
+    "SSN Keyword": "[SSN_MENTIONED]", # Keep keyword overrides
+    "DOB Keyword": "[DOB_MENTIONED]",
+    # Removed: GPE, LOC, ORG, DATE, MONEY, NORP, FAC etc. as direct keys
+    # Category Mappings (fallback if Type not in map)
+    "Credentials": "[CREDENTIALS_INFO]",
+    "Personal Data (PII)": "[PII_INFO]",
+    "Potential PII/Contextual": "[CONTEXTUAL_INFO]", # Category for things like MONEY if kept
+    "Confidential/Secret": "[CONFIDENTIAL_INFO]",
+    "Legal": "[LEGAL_INFO]",
+    "Intellectual Property": "[IP_INFO]",
+    "Network": "[NETWORK_INFO]",
+    "Identifier": "[IDENTIFIER_INFO]",
+    "Contextual": "[CONTEXTUAL_INFO]", # Catch-all for less sensitive NER/Keywords if needed
+    "Keyword": "[SENSITIVE_KEYWORD]", # Fallback for unmapped Keywords
 }
-def get_placeholder(finding): # Logic remains same
+def get_placeholder(finding):
     ftype = finding.get('type', ''); fcategory = finding.get('category', '')
     if ftype in PLACEHOLDER_MAP: return PLACEHOLDER_MAP[ftype]
     if fcategory in PLACEHOLDER_MAP: return PLACEHOLDER_MAP[fcategory]
     if ftype == 'Keyword': return PLACEHOLDER_MAP.get('Keyword', '[KEYWORD]')
     sanitized_category = re.sub(r'[^\w\s-]', '', fcategory).strip().upper().replace(' ','_')
     return f"[{sanitized_category or 'INFO'}]"
-def redact_text(text, findings): # Logic remains same
+def redact_text(text, findings):
     if not findings or not text: return text
     sorted_findings = sorted(findings, key=lambda f: (f['span'][0], -f['span'][1]))
     redacted = ""; last_end = 0; processed_indices = set()
@@ -190,7 +173,7 @@ def redact_text(text, findings): # Logic remains same
     return redacted
 
 # --- Confidentiality Check Function ---
-def perform_confidentiality_check(text): # Includes skipping CARDINAL
+def perform_confidentiality_check(text): # Includes skipping CARDINAL & Ignore List
     if not text or not isinstance(text, str): return {"found_issues": False, "findings": []}
     findings = []; processed_text_positions = set()
     original_text = text; lower_text = original_text.lower()
@@ -200,6 +183,16 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
         if any(i in processed_text_positions for i in range(start_index, end_index)): return
         findings.append({"category": category, "type": type, "value": value, "description": description, "span": span})
         for i in range(start_index, end_index): processed_text_positions.add(i)
+
+    # *** Ignore list for common technical/generic terms ***
+    IGNORE_TERMS_SPACY = {"lcm", "gcd", "api", "cpu", "gpu", "ram", "http", "https",
+                          "json", "xml", "sql", "html", "css", "k8s", "url", "uri",
+                          "fed", } # Added "fed" based on example
+    # *** Labels to ignore from spaCy unless overridden ***
+    IGNORE_SPACY_LABELS = {"CARDINAL", "ORG", "MONEY", "GPE", "LOC", "DATE",
+                           "NORP", "FAC", "QUANTITY", "PRODUCT", "EVENT",
+                           "WORK_OF_ART", "LAW", "LANGUAGE"}
+
     # 1. spaCy NER Processing
     spacy_findings_temp = []
     if nlp:
@@ -207,19 +200,43 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
             doc = nlp(original_text)
             for ent in doc.ents:
                 label = ent.label_; category = "Unknown"; finding_type = label; entity_text = ent.text; entity_text_lower = entity_text.lower()
+
+                # --- Rule-based Override / Ignore List ---
+                if entity_text_lower in IGNORE_TERMS_SPACY:
+                    print(f"DEBUG: Ignoring common technical term/acronym classified by spaCy as {label}: '{entity_text}'")
+                    continue # Skip this entity entirely
+
+                # Handle specific known sensitive acronyms if misclassified
+                # This check runs *before* the general label ignore check
+                is_overridden_sensitive = False
                 if label in ["ORG", "MISC", "PRODUCT"] :
-                    if entity_text_lower == "ssn": label = "SSN_KW_OVERRIDE"; category = "Personal Data (PII)"; finding_type = "SSN Keyword"
-                    elif entity_text_lower == "dob": label = "DOB_KW_OVERRIDE"; category = "Personal Data (PII)"; finding_type = "DOB Keyword"
-                if label == "CARDINAL": continue # Skip CARDINAL
+                    if entity_text_lower == "ssn":
+                        category = "Personal Data (PII)"; finding_type = "SSN Keyword"
+                        is_overridden_sensitive = True
+                    elif entity_text_lower == "dob":
+                         category = "Personal Data (PII)"; finding_type = "DOB Keyword"
+                         is_overridden_sensitive = True
+
+                # --- Skip common entity labels UNLESS overridden ---
+                if label in IGNORE_SPACY_LABELS and not is_overridden_sensitive:
+                    print(f"DEBUG: Skipping common spaCy {label} entity: '{entity_text}'")
+                    continue # Don't process this entity further
+                # --- End Skip Logic ---
+
+                # Map remaining essential labels (only PERSON left as sensitive by default)
                 if label == "PERSON": category = "Personal Data (PII)"; finding_type = "PERSON"
-                elif label in ["GPE", "LOC"]: category = "Contextual"; finding_type = "LOCATION"
-                elif label == "ORG": category = "Contextual"; finding_type = "ORGANIZATION"
-                elif label == "DATE": category = "Contextual"; finding_type = "DATE_ENTITY"
-                elif label in ["MONEY", "QUANTITY"]: category = "Potential PII/Contextual"; finding_type = label
-                elif label in ["NORP", "FAC", "PRODUCT", "EVENT", "WORK_OF_ART", "LAW", "LANGUAGE"]: category = "Contextual"; finding_type = label
-                if category != "Unknown": spacy_findings_temp.append({"category": category, "type": finding_type, "value": entity_text, "description": f"Detected '{label}' entity (via spaCy NER).", "span": (ent.start_char, ent.end_char)})
+                # Add other labels ONLY if they haven't been categorized yet AND you want them for context (not sensitive)
+                elif category == "Unknown": # Only if not already categorized by override
+                    # You could potentially map other non-ignored labels to "Contextual" here if needed
+                    # category = "Contextual"
+                    pass # For now, we ignore unmapped labels if not caught by overrides/specific list
+
+                # Add if category was determined (i.e., PERSON or an override like SSN/DOB)
+                if category != "Unknown":
+                    spacy_findings_temp.append({"category": category, "type": finding_type, "value": entity_text, "description": f"Detected '{label}' entity (via spaCy NER).", "span": (ent.start_char, ent.end_char)})
         except Exception as e: print(f"Error during spaCy processing: {e}")
     else: print("spaCy NER skipped as model is not loaded.")
+
     # 2. Keyword Scanning
     keyword_categories = { # Full lists
         "Legal": [r"attorney-client\s+privilege", r"legal\s+hold", r"litigation", r"confidential\s+settlement", r"under\s+seal", r"privileged\s+and\s+confidential", r"cease\s+and\s+desist", r"nda", r"non-disclosure\s+agreement"],
@@ -238,23 +255,11 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
                              temp_keyword_findings.append({"category": category, "type": "Keyword", "value": original_text[start:end], "description": f"Detected keyword: '{original_text[start:end]}'.", "span": (start, end)})
                              for i in range(start, end): keyword_processed_positions_check.add(i)
                 except re.error as e: print(f"Warning: Skipping invalid regex keyword: '{keyword_pattern}' - {e}")
-    # 3. Keyword Proximity Scan
-    KEYWORDS_INDICATING_VALUE = {'password', 'pass', 'pwd', 'secret', 'key', 'token', 'credential', 'credentials', 'username', 'user', 'login', 'userid', 'user_id', 'account', 'acct', 'accounts', 'ssn', 'social security number', 'credit card', 'bank account', 'email', 'phone'}
-    POTENTIAL_VALUE_REGEX = r'\b([a-zA-Z0-9\-_+=/.@]{5,})\b'; PROXIMITY_WINDOW = 50
-    potential_value_findings = []; proximity_checked_indices = set()
-    for kw_finding in temp_keyword_findings:
-        keyword_value_lower = kw_finding['value'].lower().rstrip('s')
-        if keyword_value_lower in KEYWORDS_INDICATING_VALUE:
-             kw_start, kw_end = kw_finding['span']; search_start = kw_end; search_end = min(kw_end + PROXIMITY_WINDOW, len(original_text)); search_text = original_text[search_start:search_end]
-             try:
-                  for value_match in re.finditer(POTENTIAL_VALUE_REGEX, search_text):
-                       val_start_in_slice, val_end_in_slice = value_match.span(); val_start_abs = search_start + val_start_in_slice; val_end_abs = search_start + val_end_in_slice; value = value_match.group(1)
-                       if value.lower() in ['is', 'are', 'was', 'the', 'a', 'an', 'and', 'for', 'my', 'your', 'number'] or (value.isdigit() and len(value)<3): continue
-                       if not any(i in proximity_checked_indices for i in range(val_start_abs, val_end_abs)):
-                            potential_value_findings.append({"category": kw_finding['category'], "type": "Value near Keyword", "value": value, "description": f"Potential value found near keyword '{kw_finding['value']}'.", "span": (val_start_abs, val_end_abs)})
-                            for i in range(val_start_abs, val_end_abs): proximity_checked_indices.add(i)
-             except re.error as e: print(f"Warning: Error during proximity value search: {e}")
-    # 4. Regex Pattern Matching
+
+    # --- 3. Keyword Proximity Scan REMOVED ---
+    potential_value_findings = [] # Keep list empty
+
+    # --- 4. Regex Pattern Matching ---
     regex_patterns = [ # Full list
         (r'\b(password|passwd|secret|pwd|pass)\b(?:\s+(?:is|was|are|be)\s+|\s*[:=]\s*|\s+)(\S+)', "Password Assignment", "Credentials", "Potential password assignment.", re.IGNORECASE),
         (r'\b(api[\._]?key|access[\._]?key|secret[\._]?key|token|credential|auth_token)\b\s*[:=]\s*(?:\{|"|\'|)([^\s;\'"\}]+)(?:\}|"|\'|;)', "Credential Assignment", "Credentials", "Potential hardcoded key/token assignment in code.", re.IGNORECASE),
@@ -287,12 +292,15 @@ def perform_confidentiality_check(text): # Includes skipping CARDINAL
                       if value and start < end: regex_findings_temp.append({"category": category, "type": type, "value": value, "description": description, "span": (start, end)})
             except re.error as e: print(f"Warning: Skipping invalid regex pattern: {pattern} - {e}")
             except IndexError as e: print(f"Warning: Index error during regex: {pattern} - {e}")
-    # 5. Add Findings in Priority Order
+
+    # --- 5. Add Findings in Simplified Priority Order ---
+    # Priority: Specific Regex -> Keywords -> spaCy NER (Proximity scan removed)
     for finding in regex_findings_temp: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     for finding in temp_keyword_findings: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
-    for finding in potential_value_findings: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
+    # Proximity values removed
     for finding in spacy_findings_temp: add_finding(finding["category"], finding["type"], finding["value"], finding["description"], finding["span"][0], finding["span"][1])
     # --- End Finding Addition ---
+
     sorted_findings = sorted(findings, key=lambda f: (f['span'][0], -f['span'][1]))
     return {"found_issues": len(sorted_findings) > 0, "findings": sorted_findings}
 
@@ -303,19 +311,23 @@ def read_parse_audit_log():
     try:
         if os.path.exists(LOG_FILE_PATH):
             with open(LOG_FILE_PATH, 'r', encoding='utf-8') as f:
-                lines = f.readlines(); lines.reverse() # Show newest first
+                lines = f.readlines(); lines.reverse()
                 for line_num, line in enumerate(lines, 1):
-                    parts = line.strip().split(' | ')
-                    if len(parts) == 7:
-                        entry = {}
-                        try:
-                            entry['timestamp'] = parts[0].strip(); entry['user'] = parts[1].split(':', 1)[-1].strip() if ':' in parts[1] else parts[1].strip()
-                            entry['model'] = parts[2].split(':', 1)[-1].strip() if ':' in parts[2] else parts[2].strip(); entry['findings'] = parts[3].split(':', 1)[-1].strip() if ':' in parts[3] else parts[3].strip()
-                            entry['original_excerpt'] = parts[4].split(':', 1)[-1].strip() if ':' in parts[4] else parts[4].strip(); entry['redacted_excerpt'] = parts[5].split(':', 1)[-1].strip() if ':' in parts[5] else parts[5].strip()
-                            entry['error_msg'] = parts[6].split(':', 1)[-1].strip() if ':' in parts[6] else parts[6].strip(); log_entries.append(entry)
-                        except IndexError as e: print(f"Warning: Could not parse log line {line_num} due to missing parts: '{line.strip()}' - Error: {e}")
-                        except Exception as parse_e: print(f"Warning: Could not parse log line {line_num}: '{line.strip()}' - Error: {parse_e}")
-                    else: print(f"Warning: Skipping malformed log line {line_num} (incorrect parts: {len(parts)}): '{line.strip()}'")
+                    clean_line = line.strip();
+                    if not clean_line: continue
+                    entry = {'timestamp': 'N/A', 'user': 'N/A', 'model': 'N/A', 'findings': 'N/A', 'original_excerpt': 'N/A', 'redacted_excerpt': 'N/A', 'error_msg': 'N/A'}
+                    try:
+                        ts_part, rest_of_line = clean_line.split(' | ', 1); entry['timestamp'] = ts_part.strip()
+                        pattern = re.compile(r"User:(?P<user>.*?)\s*\|\s*Model:(?P<model>.*?)\s*\|\s*Findings:(?P<findings>.*?)\s*\|\s*OriginalExcerpt:(?P<original_excerpt>.*?)\s*\|\s*RedactedExcerpt:(?P<redacted_excerpt>.*?)\s*\|\s*Error:(?P<error_msg>.*)")
+                        match = pattern.search(rest_of_line)
+                        if match:
+                            gd = match.groupdict()
+                            entry['user'] = gd.get('user', 'Parse Error').strip(); entry['model'] = gd.get('model', 'Parse Error').strip(); entry['findings'] = gd.get('findings', 'Parse Error').strip()
+                            entry['original_excerpt'] = gd.get('original_excerpt', 'Parse Error').strip(); entry['redacted_excerpt'] = gd.get('redacted_excerpt', 'Parse Error').strip(); entry['error_msg'] = gd.get('error_msg', 'Parse Error').strip()
+                            log_entries.append(entry)
+                        else: print(f"Warning: Regex failed to parse fields on log line {line_num}: '{rest_of_line}'")
+                    except ValueError: print(f"Warning: Skipping malformed log line {line_num} (missing initial ' | '): '{clean_line}'")
+                    except Exception as parse_e: print(f"Warning: Could not parse log line {line_num}: '{clean_line}' - Error: {parse_e}")
         else: print(f"Audit log file '{LOG_FILE_PATH}' not found.")
     except Exception as e: print(f"Error reading audit log file: {e}"); error = f"Could not read audit log file: {str(e)}"
     return log_entries, error
@@ -324,9 +336,9 @@ def read_parse_audit_log():
 @app.route('/', methods=['GET', 'POST'])
 def home():
     results = None; original_text_display = ""; uploaded_filename = None; error = None; llm_response = None; text_sent_to_llm = None; source_description = "No input processed yet."; placeholders_used = None; user_identifier = "anonymous"
-    # Audit log display moved to separate routes
     if request.method == 'POST':
         text_input_from_area = request.form.get('text_to_analyze', ''); file = request.files.get('file_to_analyze'); content_to_analyze = None
+        # --- Input Processing ---
         if file and file.filename:
             if allowed_file(file.filename):
                 uploaded_filename = secure_filename(file.filename); print(f"Processing uploaded file: {uploaded_filename}"); source_description = f"Uploaded file '{uploaded_filename}'"; file_ext = uploaded_filename.rsplit('.', 1)[1].lower()
@@ -334,7 +346,6 @@ def home():
                     if file_ext == 'txt': content_to_analyze = extract_text_from_txt(file.stream)
                     elif file_ext == 'pdf': content_to_analyze = extract_text_from_pdf(file.stream)
                     elif file_ext == 'docx': content_to_analyze = extract_text_from_docx(file.stream)
-                    # Corrected error handling block for file processing
                     if content_to_analyze is None or content_to_analyze == "[ERROR: PDF is encrypted]":
                         error_reason = "Check file content/corruption/libraries.";
                         if content_to_analyze == "[ERROR: PDF is encrypted]": error_reason = "PDF is password-protected."
@@ -356,17 +367,20 @@ def home():
                     for finding in findings_to_process: used_placeholders_set.add(get_placeholder(finding))
                 placeholders_used = sorted(list(used_placeholders_set)); text_sent_to_llm = redact_text(content_to_analyze, results['findings']); log_red_excerpt = (text_sent_to_llm[:100] + '...') if len(text_sent_to_llm) > 100 else text_sent_to_llm
             else: print("No issues found needing redaction, sending original text."); text_sent_to_llm = content_to_analyze; log_red_excerpt = log_orig_excerpt; placeholders_used = None
-            # Determine model name for logging
-            log_model = "Local Llama" if LLM_MODE == "local" and llm_local else (API_URL.split('/models/')[-1] if LLM_MODE == "api" and HF_API_KEY and '/models/' in API_URL else "LLM_Disabled_or_Unknown")
+            log_model = "Local Llama" if LLM_MODE == "local" and llm_local else ("API_" + API_URL.split('/')[-1] if LLM_MODE == "api" and HF_API_KEY and '/models/' in API_URL else "LLM_Disabled/Unknown")
             llm_response = query_llm(text_sent_to_llm)
             if llm_response and llm_response.startswith(("[Error", "[LLM Info")): log_error += f" LLM Query: {llm_response}"
             print("LLM query finished.")
         elif error: results = None; llm_response = None; text_sent_to_llm = None; placeholders_used = None; log_orig_excerpt = "Error processing input"; log_red_excerpt = "Error processing input"
         # Audit Logging
-        try: safe_orig_excerpt = log_orig_excerpt.replace('|', '/'); safe_red_excerpt = log_red_excerpt.replace('|', '/'); safe_error_msg = log_error.replace('|', '/'); log_message = (f"User:{user_identifier} | Model:{log_model} | Findings:{log_num_findings} | OriginalExcerpt:{safe_orig_excerpt} | RedactedExcerpt:{safe_red_excerpt} | Error:{safe_error_msg}"); audit_logger.info(log_message)
+        try:
+            safe_orig_excerpt = str(log_orig_excerpt or '').replace('|', '/').replace('\n', ' ').replace('\r', '')
+            safe_red_excerpt = str(log_red_excerpt or '').replace('|', '/').replace('\n', ' ').replace('\r', '')
+            safe_error_msg = str(log_error or '').replace('|', '/').replace('\n', ' ').replace('\r', '')
+            log_message = (f"User:{user_identifier} | Model:{log_model} | Findings:{log_num_findings} | OriginalExcerpt:{safe_orig_excerpt} | RedactedExcerpt:{safe_red_excerpt} | Error:{safe_error_msg}"); audit_logger.info(log_message)
         except Exception as log_e: print(f"!!! FAILED TO WRITE AUDIT LOG: {log_e} !!!")
 
-    # Don't pass audit log data to the main index template
+    # Don't pass audit log data to the main index template anymore
     return render_template('index.html',
                            results=results, original_text=original_text_display,
                            uploaded_filename=uploaded_filename, error=error,
@@ -386,7 +400,6 @@ def user_activity_report():
             model = entry.get('model', 'Unknown')
             if model != 'N/A': model_usage[model] += 1
         report_data = {'total_requests': total_requests, 'total_findings': total_findings_overall, 'model_usage': dict(model_usage.most_common()), 'log_entries': log_entries[:100]}
-    # Assumes templates/admin_user_report.html exists
     return render_template('admin_user_report.html', report_data=report_data, error=error)
 
 @app.route('/admin/findings_graph')
@@ -407,14 +420,13 @@ def findings_graph():
                     if count > 3: findings_summary['Contextual'] += int(count * 0.1)
                     if 0 < count <= 3: findings_summary['Other'] += 1
                 except ValueError: continue
-            findings_summary = Counter({k: v for k, v in findings_summary.items() if v > 0}) # Remove zeros
+            findings_summary = Counter({k: v for k, v in findings_summary.items() if v > 0})
             if findings_summary:
                  fig = go.Figure(data=[go.Bar( x=list(findings_summary.keys()), y=list(findings_summary.values()) )])
                  fig.update_layout(title_text='Approximate Finding Category Frequency (Estimate from Logs)')
                  graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-            else: graphJSON = None
+            else: graphJSON = None; error = "No finding data to graph."
         except Exception as e: print(f"Error generating graph: {e}"); flash(f"Error generating graph: {e}", "danger"); graphJSON = None; error = str(e)
-    # Assumes templates/admin_findings_graph.html exists
     return render_template('admin_findings_graph.html', graphJSON=graphJSON, error=error)
 # --- End Admin Routes ---
 
