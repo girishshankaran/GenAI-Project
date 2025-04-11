@@ -127,7 +127,7 @@
                 <label for="file_input" class="file-input-label">Upload Document (.txt, .pdf, .docx):</label>
                 <input type="file" id="file_input" name="file_to_analyze" accept=".txt,.pdf,.docx">
                 <div class="buttons">
-                    <button type="submit">Analyze Content</button>
+                    <button type="submit">Submit</button>
                     <a href="{{ url_for('home') }}" class="clear-button">Clear</a>
                 </div>
             </form>
@@ -167,7 +167,6 @@
                 <strong>Disclaimer:</strong> This check uses keywords, patterns, and basic NER. It may not catch all issues or may flag items incorrectly. Always review sensitive data handling carefully.
             </div>
         </div>
-        {% endif %}
 
         <!-- Redacted Text Display Section -->
         {% if redacted_text is not none %}
