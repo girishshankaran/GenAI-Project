@@ -22,47 +22,57 @@
         header a:hover, header button.header-button:hover, header button.dropdown-trigger:hover { text-decoration:underline; }
         header .signin-button{background-color:#1a73e8;color:#fff;padding:7px 15px;border-radius:4px;text-decoration:none;font-weight:700; margin-left: 15px;}
         header .signin-button:hover{background-color:#185abc;box-shadow:0 1px 2px 0 rgba(66,133,244,.3),0 1px 3px 1px rgba(66,133,244,.15); text-decoration:none;}
-
-        /* --- Dropdown Specific Styles --- */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-            margin-left: 15px;
-        }
-        .dropdown-trigger::after { /* Keep arrow */
-            content: ' ▼'; font-size: 0.8em; margin-left: 4px;
-        }
-        .dropdown-content {
-            /* display: none; REMOVE THIS - JS will handle visibility */
-            visibility: hidden; /* Hide using visibility initially */
-            opacity: 0; /* Make invisible */
-            position: absolute;
-            background-color: #ffffff;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 10;
-            border-radius: 4px;
-            padding: 5px 0;
-            right: 0;
-            margin-top: 5px;
-            transition: opacity 0.2s ease-in-out, visibility 0s linear 0.2s; /* Smooth fade */
-        }
-        /* Style for when dropdown IS visible */
-        .dropdown-content.visible {
-            visibility: visible;
-            opacity: 1;
-            transition: opacity 0.2s ease-in-out, visibility 0s linear 0s;
-        }
-        .dropdown-content a {
-            color: #202124; padding: 10px 16px; text-decoration: none; display: block; font-size: 13px; text-align: left; white-space: nowrap; cursor: pointer;
-        }
+        .dropdown {position: relative; display: inline-block; margin-left: 15px;}
+        .dropdown-trigger::after { content: ' ▼'; font-size: 0.8em; margin-left: 4px;}
+        .dropdown-content {visibility: hidden; opacity: 0; position: absolute; background-color: #ffffff; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 10; border-radius: 4px; padding: 5px 0; right: 0; margin-top: 5px; transition: opacity 0.2s ease-in-out, visibility 0s linear 0.2s;}
+        .dropdown-content.visible {visibility: visible; opacity: 1; transition: opacity 0.2s ease-in-out, visibility 0s linear 0s;}
+        .dropdown-content a {color: #202124; padding: 10px 16px; text-decoration: none; display: block; font-size: 13px; text-align: left; white-space: nowrap; cursor: pointer;}
         .dropdown-content a:hover { background-color: #f1f3f4; text-decoration: none; }
-        /* REMOVE the hover rule for showing content */
-        /* .dropdown:hover .dropdown-content { display: block; } */
-        /* --- End Dropdown Styles --- */
-
-        /* ... (rest of CSS remains the same) ... */
-        main{flex-grow:1;display:flex;flex-direction:column;align-items:center;padding:20px;padding-top:5vh}.logo h1{font-size:60px;font-weight:400;color:#4285f4;margin:0 0 25px;letter-spacing:-1px;text-align:center}.form-container{max-width:650px;width:95%;text-align:left;background-color:#fff;padding:25px;border:1px solid #dfe1e5;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:30px}.input-area{width:100%;margin-bottom:15px;display:flex;align-items:flex-start;border:1px solid #dfe1e5;border-radius:8px;padding:10px 15px;box-shadow:none;transition:box-shadow .3s ease,border-color .3s ease;background-color:#fff}.input-area:focus-within,.input-area:hover{border-color:#aaa;box-shadow:0 1px 6px rgba(32,33,36,.1)}.input-area .input-icon{color:#9aa0a6;margin-right:10px;font-size:18px;padding-top:8px}.input-area textarea{flex-grow:1;border:none;outline:none;padding:8px 0;font-size:16px;background-color:transparent;width:100%;resize:vertical;min-height:80px;line-height:1.5;font-family:inherit}.text-input-label{display:block;margin-bottom:8px;font-size:.95em;font-weight:700;color:#3c4043}.file-input-label{display:block;margin:15px 0 8px;font-size:.95em;font-weight:700;color:#3c4043}input[type=file]{display:block;margin-bottom:20px;color:#3c4043;font-size:.9em;border:1px solid #dfe1e5;padding:8px 12px;border-radius:4px;cursor:pointer}.buttons{display:flex;justify-content:center;margin-bottom:10px;margin-top:25px}.buttons button,.clear-button{background-color:#1a73e8;border:1px solid #1a73e8;border-radius:4px;color:#fff;font-size:14px;font-weight:700;padding:10px 24px;margin:0 8px;cursor:pointer;transition:background-color .2s ease,box-shadow .2s ease}.buttons button:focus,.clear-button:focus{outline:2px solid #a4c2f4;outline-offset:2px}.buttons button:hover,.clear-button:hover{background-color:#185abc;box-shadow:0 1px 2px rgba(0,0,0,.1);text-decoration:none}.clear-button{background-color:#f8f9fa;border:1px solid #dadce0;color:#3c4043;text-decoration:none;display:inline-flex;align-items:center}.clear-button:hover{background-color:#f1f3f4;border-color:#c6c6c6;box-shadow:0 1px 1px rgba(0,0,0,.1)}.llm-response-container,.redacted-text-container,.results-container,.audit-log-container{max-width:800px;width:95%;margin-top:30px;padding:25px;background-color:#fff;border:1px solid #dfe1e5;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);text-align:left}.llm-response-container h2,.redacted-text-container h2,.results-container h2,.audit-log-container h2{color:#1a73e8;border-bottom:2px solid #e8f0fe;padding-bottom:10px;margin-top:0;margin-bottom:20px;font-size:1.4em}.results-container h3{color:#202124;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:25px;margin-bottom:15px;font-size:1.1em}.results-summary{padding:15px;border-radius:4px;margin-bottom:25px;font-weight:500;display:flex;align-items:center}.results-summary::before{font-size:1.2em;margin-right:10px}.issues-found{background-color:#fef7e0;border:1px solid #fce8b2;color:#754c00}.issues-found::before{content:"⚠️"}.no-issues-found{background-color:#e6f4ea;border:1px solid #c6e1cf;color:#137333}.no-issues-found::before{content:"✅"}.findings-list{list-style:none;padding:0}.findings-list li{border:1px solid #e0e0e0;border-left:4px solid #fbbc04;border-radius:4px;padding:12px 15px;margin-bottom:12px;background-color:#fff;transition:box-shadow .2s ease}.findings-list li:hover{box-shadow:0 2px 5px rgba(0,0,0,.1)}.finding-details{margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}.finding-category{font-weight:700;color:#333;margin-right:10px;font-size:1.05em}.finding-type{font-style:italic;color:#5f6368;background-color:#f1f3f4;padding:2px 6px;border-radius:10px;font-size:.85em}.finding-value{display:block;font-family:"Courier New",Courier,monospace;background-color:#f1f3f4;padding:6px 10px;border-radius:4px;margin:8px 0;word-break:break-all;border:1px dashed #ccc;color:#d93025}.finding-description{font-size:.9em;color:#5f6368;margin-top:5px}.analysis-source{font-style:italic;color:#5f6368;margin-bottom:20px;padding-bottom:15px;border-bottom:1px dashed #ccc;font-size:.9em}.disclaimer{font-size:.85em;color:#70757a;margin-top:25px;border-top:1px dashed #ccc;padding-top:15px;line-height:1.4}.llm-response-container p,.redacted-text-container p{font-size:.95em;color:#3c4043;line-height:1.6;margin-bottom:15px}.llm-response-content,.redacted-text-content{font-family:"Courier New",Courier,monospace;background-color:#f8f9fa;padding:15px;border-radius:4px;border:1px solid #e0e0e0;white-space:pre-wrap;word-wrap:break-word;max-height:400px;overflow-y:auto;font-size:.9em;color:#202124}.llm-response-content{font-family:Arial,sans-serif;background-color:#e8f0fe;border-color:#c7d9f7}footer{background:#f2f2f2;padding:15px 30px;font-size:13px;color:#70757a;border-top:1px solid #e4e4e4;display:flex;justify-content:space-between;flex-wrap:wrap;margin-top:auto}@media (max-width:600px){footer{justify-content:center}.footer-links-left,.footer-links-right{text-align:center;width:100%;margin-bottom:10px}}footer a{color:#70757a;padding:0 10px;text-decoration:none}footer a:hover{text-decoration:underline}.error-message{max-width:650px;width:95%;color:#d8000c;background-color:#ffd2d2;border:1px solid #d8000c;padding:12px 18px;margin:0 auto 20px;border-radius:4px;font-size:.9em;text-align:center}
+        main{flex-grow:1;display:flex;flex-direction:column;align-items:center;padding:20px;padding-top:5vh}
+        .logo h1{font-size:60px;font-weight:400;color:#4285f4;margin:0 0 25px;letter-spacing:-1px;text-align:center}
+        .form-container{max-width:650px;width:95%;text-align:left;background-color:#fff;padding:25px;border:1px solid #dfe1e5;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:30px}
+        .input-area{width:100%;margin-bottom:15px;display:flex;align-items:flex-start;border:1px solid #dfe1e5;border-radius:8px;padding:10px 15px;box-shadow:none;transition:box-shadow .3s ease,border-color .3s ease;background-color:#fff}
+        .input-area:focus-within,.input-area:hover{border-color:#aaa;box-shadow:0 1px 6px rgba(32,33,36,.1)}
+        .input-area .input-icon{color:#9aa0a6;margin-right:10px;font-size:18px;padding-top:8px}
+        .input-area textarea{flex-grow:1;border:none;outline:none;padding:8px 10px;font-size:14px;background-color:transparent;width:100%;resize:vertical;min-height:120px;line-height:1.5;font-family:Menlo,Monaco,Consolas,"Courier New",monospace;white-space:pre-wrap;word-wrap:break-word;overflow-y:auto}
+        .text-input-label{display:block;margin-bottom:8px;font-size:.95em;font-weight:700;color:#3c4043}
+        .file-input-label{display:block;margin:15px 0 8px;font-size:.95em;font-weight:700;color:#3c4043}
+        input[type=file]{display:block;margin-bottom:20px;color:#3c4043;font-size:.9em;border:1px solid #dfe1e5;padding:8px 12px;border-radius:4px;cursor:pointer}
+        .buttons{display:flex;justify-content:center;margin-bottom:10px;margin-top:25px}
+        .buttons button,.clear-button{background-color:#1a73e8;border:1px solid #1a73e8;border-radius:4px;color:#fff;font-size:14px;font-weight:700;padding:10px 24px;margin:0 8px;cursor:pointer;transition:background-color .2s ease,box-shadow .2s ease}
+        .buttons button:focus,.clear-button:focus{outline:2px solid #a4c2f4;outline-offset:2px}
+        .buttons button:hover,.clear-button:hover{background-color:#185abc;box-shadow:0 1px 2px rgba(0,0,0,.1);text-decoration:none}
+        .clear-button{background-color:#f8f9fa;border:1px solid #dadce0;color:#3c4043;text-decoration:none;display:inline-flex;align-items:center}
+        .clear-button:hover{background-color:#f1f3f4;border-color:#c6c6c6;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+        .llm-response-container,.redacted-text-container,.results-container,.audit-log-container{max-width:800px;width:95%;margin-top:30px;padding:25px;background-color:#fff;border:1px solid #dfe1e5;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);text-align:left}
+        .llm-response-container h2,.redacted-text-container h2,.results-container h2,.audit-log-container h2{color:#1a73e8;border-bottom:2px solid #e8f0fe;padding-bottom:10px;margin-top:0;margin-bottom:20px;font-size:1.4em}
+        .results-container h3{color:#202124;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:25px;margin-bottom:15px;font-size:1.1em}
+        .results-summary{padding:15px;border-radius:4px;margin-bottom:25px;font-weight:500;display:flex;align-items:center}
+        .results-summary::before{font-size:1.2em;margin-right:10px}
+        .issues-found{background-color:#fef7e0;border:1px solid #fce8b2;color:#754c00}
+        .issues-found::before{content:"⚠️"}
+        .no-issues-found{background-color:#e6f4ea;border:1px solid #c6e1cf;color:#137333}
+        .no-issues-found::before{content:"✅"}
+        .findings-list{list-style:none;padding:0}
+        .findings-list li{border:1px solid #e0e0e0;border-left:4px solid #fbbc04;border-radius:4px;padding:12px 15px;margin-bottom:12px;background-color:#fff;transition:box-shadow .2s ease}
+        .findings-list li:hover{box-shadow:0 2px 5px rgba(0,0,0,.1)}
+        .finding-details{margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+        .finding-category{font-weight:700;color:#333;margin-right:10px;font-size:1.05em}
+        .finding-type{font-style:italic;color:#5f6368;background-color:#f1f3f4;padding:2px 6px;border-radius:10px;font-size:.85em}
+        .finding-value{display:block;font-family:"Courier New",Courier,monospace;background-color:#f1f3f4;padding:6px 10px;border-radius:4px;margin:8px 0;word-break:break-all;border:1px dashed #ccc;color:#d93025}
+        .finding-description{font-size:.9em;color:#5f6368;margin-top:5px}
+        .analysis-source{font-style:italic;color:#5f6368;margin-bottom:20px;padding-bottom:15px;border-bottom:1px dashed #ccc;font-size:.9em}
+        .disclaimer{font-size:.85em;color:#70757a;margin-top:25px;border-top:1px dashed #ccc;padding-top:15px;line-height:1.4}
+        .llm-response-container p,.redacted-text-container p{font-size:.95em;color:#3c4043;line-height:1.6;margin-bottom:15px}
+        .llm-response-content,.redacted-text-content{font-family:"Courier New",Courier,monospace;background-color:#f8f9fa;padding:15px;border-radius:4px;border:1px solid #e0e0e0;white-space:pre-wrap;word-wrap:break-word;max-height:400px;overflow-y:auto;font-size:.9em;color:#202124}
+        .llm-response-content{font-family:Arial,sans-serif;background-color:#e8f0fe;border-color:#c7d9f7}
+        footer{background:#f2f2f2;padding:15px 30px;font-size:13px;color:#70757a;border-top:1px solid #e4e4e4;display:flex;justify-content:space-between;flex-wrap:wrap;margin-top:auto}
+        @media (max-width:600px){footer{justify-content:center}.footer-links-left,.footer-links-right{text-align:center;width:100%;margin-bottom:10px}}
+        footer a{color:#70757a;padding:0 10px;text-decoration:none}
+        footer a:hover{text-decoration:underline}
+        .error-message{max-width:650px;width:95%;color:#d8000c;background-color:#ffd2d2;border:1px solid #d8000c;padding:12px 18px;margin:0 auto 20px;border-radius:4px;font-size:.9em;text-align:center}
+        /* Modal styles */
+        .modal-overlay{display:none;position:fixed;z-index:100;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.5);align-items:center;justify-content:center}.modal-overlay.visible{display:flex}.modal-content{background-color:#fefefe;margin:auto;padding:30px;border:1px solid #888;width:80%;max-width:500px;border-radius:8px;position:relative;box-shadow:0 4px 8px 0 rgba(0,0,0,.2),0 6px 20px 0 rgba(0,0,0,.19)}.modal-close-button{color:#aaa;position:absolute;top:10px;right:15px;font-size:28px;font-weight:700;line-height:1}.modal-close-button:focus,.modal-close-button:hover{color:#000;text-decoration:none;cursor:pointer}.modal-content h2{margin-top:0;color:#1a73e8}.modal-form label{display:block;margin-bottom:5px;font-weight:700;font-size:.9em}.modal-form input[type=number],.modal-form input[type=text],.modal-form select{width:95%;padding:8px 10px;margin-bottom:15px;display:inline-block;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}.modal-form button{background-color:#1a73e8;color:#fff;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;float:right}.modal-form button:hover{background-color:#185abc}
         /* Audit log styles for separate pages */
         table.audit-log { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #fff; }
         table.audit-log th, table.audit-log td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; vertical-align: top; }
@@ -78,8 +88,8 @@
     <header>
         <!-- Model Selection Dropdown -->
         <div class="dropdown">
-            <button class="dropdown-trigger" id="model-selector-button">Select Model</button>
-            <!-- Add ID to content -->
+            <!-- Changed button text -->
+            <button class="dropdown-trigger" id="model-selector-button">Models</button>
             <div class="dropdown-content" id="model-dropdown-content">
                 <a href="#" class="model-option">ChatGPT</a>
                 <a href="#" class="model-option">DeepSeek</a>
@@ -89,21 +99,27 @@
             </div>
         </div>
 
-        <!-- Admin Tasks Dropdown -->
+        <!-- Policy Dropdown -->
         <div class="dropdown">
-            <!-- Add ID to trigger -->
-            <button class="dropdown-trigger" id="admin-tasks-button">Admin Tasks</button>
-            <!-- Add ID to content -->
+            <button class="dropdown-trigger" id="policy-menu-button">Policy</button>
+            <div class="dropdown-content" id="policy-menu-content">
+                 <a href="#" id="configure-alert-policy-button">Configure Alert Policy</a>
+                 <a href="#" id="configure-blocking-policy-button">Configure Blocking Policy</a>
+                 <a href="#">View Current Policies</a>
+            </div>
+        </div>
+
+        <!-- Reports Dropdown -->
+        <div class="dropdown">
+            <button class="dropdown-trigger" id="admin-tasks-button">Reports</button>
             <div class="dropdown-content" id="admin-tasks-content">
                 <a href="{{ url_for('user_activity_report') }}">Activity Report</a>
                 <a href="{{ url_for('findings_graph') }}">Findings Graph</a>
-                <!-- <a href="#">Suspend User (Not Implemented)</a> -->
             </div>
         </div>
 
         <a href="#">About</a>
-        <a href="#">Features</a>
-        <a href="#" class="signin-button">Sign In</a> {# Or conditional login/logout #}
+        <a href="#" class="signin-button">Sign In</a>
     </header>
 
     <main>
@@ -134,68 +150,126 @@
         </div>
 
         <!-- Results Section -->
-        {% if results %}
-        <div class="results-container">
-            <h2>Analysis Results</h2>
-            <div class="analysis-source">
-                {% if uploaded_filename %}Source: Uploaded file '<strong>{{ uploaded_filename }}</strong>'{% else %}Source: Text Input{% endif %}
-            </div>
-            {% if results.found_issues %}
-                <div class="results-summary issues-found">
-                    Potential sensitive information detected based on configured rules. Review {{ results.findings | length }} potential issue(s) below. Text sent to LLM has been redacted.
+        {% if results is not none %}
+            <div class="results-container">
+                <h2>Analysis Results</h2>
+                <div class="analysis-source">
+                    {% if uploaded_filename %}Source: Uploaded file '<strong>{{ uploaded_filename }}</strong>'{% else %}Source: Text Input{% endif %}
                 </div>
-                <h3>Potential Issues Found:</h3>
-                <ul class="findings-list">
-                    {% for finding in results.findings %}
-                    <li>
-                        <div class="finding-details">
-                            <span class="finding-category">{{ finding.category }}</span>
-                            <span class="finding-type">{{ finding.type }}</span>
-                        </div>
-                        <code class="finding-value">{{ finding.value }}</code>
-                        <div class="finding-description">{{ finding.description }}</div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <div class="results-summary no-issues-found">
-                    {% if uploaded_filename %}No obvious sensitive information detected in '<strong>{{ uploaded_filename }}</strong>' based on current rules. Original text sent to LLM.
-                    {% else %}No obvious sensitive information detected in the provided text based on current rules. Original text sent to LLM.{% endif %}
+                {% if results.get('found_issues', False) %}
+                    <div class="results-summary issues-found">
+                        Potential sensitive information detected based on configured rules. Review {{ results.findings | length }} potential issue(s) below. Text sent to LLM has been redacted.
+                    </div>
+                    <h3>Potential Issues Found:</h3>
+                    {% if results.findings %}
+                        <ul class="findings-list">
+                            {% for finding in results.findings %}
+                            <li>
+                                <div class="finding-details">
+                                    <span class="finding-category">{{ finding.get('category', 'N/A') }}</span>
+                                    <span class="finding-type">{{ finding.get('type', 'N/A') }}</span>
+                                </div>
+                                <code class="finding-value">{{ finding.get('value', '') }}</code>
+                                <div class="finding-description">{{ finding.get('description', '') }}</div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                         <p>No specific findings listed, although issues were flagged.</p>
+                    {% endif %}
+                {% else %}
+                    <div class="results-summary no-issues-found">
+                        {% if uploaded_filename %}No obvious sensitive information detected in '<strong>{{ uploaded_filename }}</strong>' based on current rules. Original text sent to LLM.
+                        {% else %}No obvious sensitive information detected in the provided text based on current rules. Original text sent to LLM.{% endif %}
+                    </div>
+                {% endif %}
+                <div class="disclaimer">
+                    <strong>Disclaimer:</strong> This check uses keywords, patterns, and basic NER. It may not catch all issues or may flag items incorrectly. Always review sensitive data handling carefully.
                 </div>
-            {% endif %}
-            <div class="disclaimer">
-                <strong>Disclaimer:</strong> This check uses keywords, patterns, and basic NER. It may not catch all issues or may flag items incorrectly. Always review sensitive data handling carefully.
             </div>
-        </div>
+        {% endif %}
+
 
         <!-- Redacted Text Display Section -->
         {% if redacted_text is not none %}
-        <div class="redacted-text-container">
-            <h2>Text Sent to LLM</h2>
-            {% if results and results.found_issues %}
-                {% if placeholders_used %}
-                    {% set examples = placeholders_used[:3] | join(', ') %}
-                    {% if placeholders_used | length > 3 %}{% set examples = examples + ", etc." %}{% endif %}
-                    <p>The following text, with potential sensitive information replaced by placeholders (e.g., {{ examples }}), was sent to the LLM for processing:</p>
+            <div class="redacted-text-container">
+                <h2>Text Sent to LLM</h2>
+                {% if results and results.get('found_issues', False) %}
+                    {% if placeholders_used %}
+                        {% set examples = placeholders_used[:3] | join(', ') %}
+                        {% if placeholders_used | length > 3 %}{% set examples = examples + ", etc." %}{% endif %}
+                        <p>The following text, with potential sensitive information replaced by placeholders (e.g., {{ examples }}), was sent to the LLM for processing:</p>
+                    {% else %}
+                         <p>The following text, with potential sensitive information replaced by placeholders, was sent to the LLM for processing:</p>
+                    {% endif %}
                 {% else %}
-                     <p>The following text, with potential sensitive information replaced by placeholders, was sent to the LLM for processing:</p>
+                    <p>No potential sensitive information requiring redaction was found. The original text below was sent to the LLM:</p>
                 {% endif %}
-            {% else %}
-                <p>No potential sensitive information requiring redaction was found. The original text below was sent to the LLM:</p>
-            {% endif %}
-            <pre class="redacted-text-content">{{ redacted_text }}</pre>
-        </div>
+                <pre class="redacted-text-content">{{ redacted_text }}</pre>
+            </div>
         {% endif %}
+
 
         <!-- LLM Response Section -->
         {% if llm_response %}
-        <div class="llm-response-container">
-            <h2>LLM Response</h2>
-            <div class="llm-response-content">{{ llm_response }}</div>
-        </div>
+            <div class="llm-response-container">
+                <h2>LLM Response</h2>
+                <div class="llm-response-content">{{ llm_response }}</div>
+            </div>
         {% endif %}
 
-        <!-- Audit Log Display Section REMOVED from here -->
+
+        <!-- Alert Policy Configuration Modal -->
+        <div id="alert-policy-modal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="modal-close-button" id="close-alert-policy-modal">×</span>
+                <h2>Configure Alert Policy</h2>
+                <p>Define thresholds for triggering email alerts.</p>
+                <form class="modal-form" onsubmit="alert('Alert policy saving not implemented yet!'); return false;">
+                    <label for="alert-finding-type">Finding Type/Category:</label>
+                    <select id="alert-finding-type" name="alert-finding-type">
+                        <option value="any">Any Sensitive Finding</option>
+                        <option value="Credentials">Credentials (Any)</option>
+                        <option value="Personal Data (PII)">PII (Any)</option>
+                        <option value="SSN Format (US)">SSN</option>
+                        <option value="Potential Credit Card">Credit Card</option>
+                    </select>
+                    <label for="alert-threshold-count">Threshold Count:</label>
+                    <input type="number" id="alert-threshold-count" name="alert-threshold-count" min="1" value="5" required>
+                    <label for="alert-time-window">Time Window (Hours):</label>
+                    <input type="number" id="alert-time-window" name="alert-time-window" min="1" value="24" required>
+                    <label for="alert-email-address">Notification Email:</label>
+                    <input type="text" id="alert-email-address" name="alert-email-address" placeholder="admin@example.com" required>
+                    <button type="submit">Save Alert Policy (Dummy)</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Blocking Policy Configuration Modal -->
+        <div id="blocking-policy-modal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="modal-close-button" id="close-blocking-policy-modal">×</span>
+                <h2>Configure Blocking Policy</h2>
+                <p>Define thresholds for automatically blocking users.</p>
+                <form class="modal-form" onsubmit="alert('Blocking policy saving not implemented yet!'); return false;">
+                    <label for="block-finding-type">Finding Type/Category:</label>
+                    <select id="block-finding-type" name="block-finding-type">
+                        <option value="any_high">Any High-Risk Finding (e.g., Password, SSN)</option>
+                        <option value="Credentials">Credentials (Any)</option>
+                        <option value="Password Assignment">Password Assignment</option>
+                        <option value="SSN Format (US)">SSN</option>
+                        <option value="Personal Data (PII)">PII (Any)</option>
+                    </select>
+                    <label for="block-threshold-count">Threshold Count:</label>
+                    <input type="number" id="block-threshold-count" name="block-threshold-count" min="1" value="3" required>
+                    <label for="block-time-window">Time Window (Hours):</label>
+                    <input type="number" id="block-time-window" name="block-time-window" min="1" value="1" required>
+                    <p style="font-size: 0.8em; color: #555;">(e.g., Block if user triggers 3 High-Risk findings within 1 hour)</p>
+                    <button type="submit">Save Blocking Policy (Dummy)</button>
+                </form>
+            </div>
+        </div>
+        <!-- END: Blocking Policy Modal -->
 
     </main>
 
@@ -204,88 +278,98 @@
         <div class="footer-links-right"> <a href="#">Security Center</a> <a href="#">Contact</a> <a href="#">Help</a> </div>
     </footer>
 
-     <!-- JavaScript for Dropdown Interaction -->
+     <!-- JavaScript for Dropdowns & Modals -->
      <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM loaded, dropdown script running.");
-
-            // --- Function to handle dropdown toggling ---
+            // Function to handle dropdown toggling
             function setupDropdown(buttonId, contentId) {
                 const triggerButton = document.getElementById(buttonId);
                 const contentElement = document.getElementById(contentId);
-
-                console.log(`Setting up dropdown: Button ID=${buttonId}, Content ID=${contentId}`);
-                console.log("Trigger Button Element:", triggerButton);
-                console.log("Content Element:", contentElement);
-
-
                 if (triggerButton && contentElement) {
                     triggerButton.addEventListener('click', function(event) {
-                        event.stopPropagation(); // Prevent click from immediately closing dropdown via body listener
-                        // Toggle the current dropdown
+                        event.stopPropagation();
                         const isVisible = contentElement.classList.contains('visible');
-                        // Hide any other potentially open dropdowns first
-                        hideAllDropdowns();
-                        // Then toggle the current one
-                        if (!isVisible) {
-                            contentElement.classList.add('visible');
-                            console.log(`Dropdown ${contentId} shown`);
-                        } else {
-                             console.log(`Dropdown ${contentId} hidden`); // Already hidden by hideAllDropdowns
-                        }
+                        hideAllDropdowns(); // Close others first
+                        if (!isVisible) { contentElement.classList.add('visible'); }
                     });
-                } else {
-                     if (!triggerButton) console.error(`Error: Could not find dropdown trigger with ID '${buttonId}'`);
-                     if (!contentElement) console.error(`Error: Could not find dropdown content with ID '${contentId}'`);
-                }
+                } else { console.error(`Error finding dropdown elements: ${buttonId}, ${contentId}`); }
             }
-
-            // --- Function to hide all dropdowns ---
             function hideAllDropdowns() {
                 document.querySelectorAll('.dropdown-content.visible').forEach(function(content) {
                     content.classList.remove('visible');
-                    console.log(`Hiding dropdown ${content.id}`);
                 });
             }
-
-            // --- Setup the dropdowns ---
+            // Setup the dropdowns
             setupDropdown('model-selector-button', 'model-dropdown-content');
             setupDropdown('admin-tasks-button', 'admin-tasks-content');
+            setupDropdown('policy-menu-button', 'policy-menu-content');
 
-            // --- Specific logic for Model Selector Options ---
+            // Specific logic for Model Selector Options
             const modelOptions = document.querySelectorAll('#model-dropdown-content .model-option');
-            const modelButton = document.getElementById('model-selector-button'); // Get button again for update
-
+            const modelButton = document.getElementById('model-selector-button');
             if (modelButton && modelOptions.length > 0) {
                 modelOptions.forEach(function(option) {
                     option.addEventListener('click', function(event) {
-                        event.preventDefault(); // Prevent link navigation
-                        event.stopPropagation(); // Prevent closing dropdown immediately
-                        const selectedModelName = event.target.textContent;
-                        modelButton.textContent = selectedModelName; // Update button text
-                        hideAllDropdowns(); // Hide dropdown after selection
-                        console.log("Model selected:", selectedModelName);
+                        event.preventDefault(); event.stopPropagation();
+                        // Change only the button's direct text, leave the arrow alone
+                        // Find existing text node or create one
+                        let textNode = null;
+                        for(let i=0; i < modelButton.childNodes.length; i++){
+                            if(modelButton.childNodes[i].nodeType === Node.TEXT_NODE){
+                                textNode = modelButton.childNodes[i];
+                                break;
+                            }
+                        }
+                        if(textNode){
+                            textNode.nodeValue = event.target.textContent;
+                        } else {
+                             // Fallback if no text node exists (e.g., first time)
+                             // This might put text after the arrow, adjust CSS/HTML if needed
+                             modelButton.insertAdjacentText('afterbegin', event.target.textContent);
+                        }
+
+                        hideAllDropdowns();
                     });
                 });
-                console.log("Model option listeners attached.");
             }
 
-            // --- Add listener to close dropdowns if clicking outside ---
+            // Add listener to close dropdowns if clicking outside
             document.addEventListener('click', function(event) {
-                // Check if the click was outside of any .dropdown container
-                let clickedInside = false;
+                let clickedInsideDropdown = false;
                 document.querySelectorAll('.dropdown').forEach(dropdown => {
-                    if (dropdown.contains(event.target)) {
-                        clickedInside = true;
-                    }
+                    if (dropdown.contains(event.target)) { clickedInsideDropdown = true; }
                 });
+                // Check if click is inside a modal *content* area
+                let clickedInsideModalContent = false;
+                 document.querySelectorAll('.modal-content').forEach(modalContent => {
+                     if (modalContent.contains(event.target)) { clickedInsideModalContent = true;}
+                 });
 
-                if (!clickedInside) {
-                    hideAllDropdowns();
-                }
+                if (!clickedInsideDropdown && !clickedInsideModalContent) { hideAllDropdowns(); }
             });
 
-            console.log("Dropdown setup complete.");
+            // Modal Logic
+            function setupModal(modalId, openButtonId, closeButtonId) {
+                 const modal = document.getElementById(modalId);
+                 const openButton = document.getElementById(openButtonId);
+                 const closeButton = document.getElementById(closeButtonId);
+
+                 if (modal && openButton && closeButton) {
+                     openButton.addEventListener('click', function(event) {
+                         event.preventDefault(); event.stopPropagation(); hideAllDropdowns();
+                         modal.classList.add('visible');
+                     });
+                     closeButton.addEventListener('click', function() { modal.classList.remove('visible'); });
+                     modal.addEventListener('click', function(event) { if (event.target === modal) { modal.classList.remove('visible'); } }); // Click on overlay closes
+                 } else {
+                     console.error(`Error finding modal elements: ${modalId}, ${openButtonId}, ${closeButtonId}`);
+                 }
+            }
+            // Setup Modals
+            setupModal('alert-policy-modal', 'configure-alert-policy-button', 'close-alert-policy-modal');
+            setupModal('blocking-policy-modal', 'configure-blocking-policy-button', 'close-blocking-policy-modal');
+
+            console.log("Page setup complete.");
         });
     </script>
 
